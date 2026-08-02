@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Polyline } from "react-leaflet";
+
 import type { RoutePoint } from "./routeData";
 
 type AnimatedRouteProps = {
   route: RoutePoint[];
-  duration?: number;
-  casingOpacity?: number;
-  routeOpacity?: number;
+  duration: number;
+  casingOpacity: number;
+  routeOpacity: number;
+  reverse?: boolean;
   onComplete?: () => void;
 };
 
@@ -17,79 +24,41 @@ type RouteSegment = {
   startDistance: number;
 };
 
-function distanceBetweenPoints(
+function getDistance(
   start: RoutePoint,
   end: RoutePoint,
-): number {
+) {
   const latitudeDifference = end[0] - start[0];
   const longitudeDifference = end[1] - start[1];
 
   return Math.sqrt(
-    latitudeDifference ** 2 + longitudeDifference ** 2,
+    latitudeDifference ** 2 +
+      longitudeDifference ** 2,
   );
-}
-
-function getPartialRoute(
-  route: RoutePoint[],
-  segments: RouteSegment[],
-  totalLength: number,
-  progress: number,
-): RoutePoint[] {
-  if (progress >= 1) {
-    return route;
-  }
-
-  const targetDistance = totalLength * progress;
-  const visibleRoute: RoutePoint[] = [route[0]];
-
-  for (const segment of segments) {
-    const segmentEndDistance =
-      segment.startDistance + segment.length;
-
-    if (targetDistance >= segmentEndDistance) {
-      visibleRoute.push(segment.end);
-      continue;
-    }
-
-    const distanceIntoSegment =
-      targetDistance - segment.startDistance;
-
-    const segmentProgress =
-      segment.length === 0
-        ? 0
-        : distanceIntoSegment / segment.length;
-
-    visibleRoute.push([
-      segment.start[0] +
-        (segment.end[0] - segment.start[0]) * segmentProgress,
-      segment.start[1] +
-        (segment.end[1] - segment.start[1]) * segmentProgress,
-    ]);
-
-    break;
-  }
-
-  return visibleRoute;
 }
 
 function AnimatedRoute({
   route,
-  duration = 4000,
-  casingOpacity = 0.9,
-  routeOpacity = 0.95,
+  duration,
+  casingOpacity,
+  routeOpacity,
+  reverse = false,
   onComplete,
 }: AnimatedRouteProps) {
-  const [progress, setProgress] = useState(0);
-  const hasCompleted = useRef(false);
+  const animationFrameRef =
+    useRef<number | null>(null);
 
-  const { segments, totalLength } = useMemo(() => {
+  const routeMeasurements = useMemo(() => {
     let accumulatedDistance = 0;
 
-    const calculatedSegments: RouteSegment[] = route
+    const segments: RouteSegment[] = route
       .slice(0, -1)
       .map((point, index) => {
         const nextPoint = route[index + 1];
-        const length = distanceBetweenPoints(point, nextPoint);
+        const length = getDistance(
+          point,
+          nextPoint,
+        );
 
         const segment: RouteSegment = {
           start: point,
@@ -104,49 +73,135 @@ function AnimatedRoute({
       });
 
     return {
-      segments: calculatedSegments,
+      segments,
       totalLength: accumulatedDistance,
     };
   }, [route]);
 
-  useEffect(() => {
-    let animationFrame: number;
-    let startTime: number | undefined;
+  const getPartialRoute = (
+    progress: number,
+  ): RoutePoint[] => {
+    if (route.length === 0) {
+      return [];
+    }
 
-    const animate = (currentTime: number) => {
-      if (startTime === undefined) {
-        startTime = currentTime;
+    if (route.length === 1) {
+      return route;
+    }
+
+    if (progress <= 0) {
+      return [route[0], route[0]];
+    }
+
+    if (progress >= 1) {
+      return route;
+    }
+
+    const targetDistance =
+      routeMeasurements.totalLength * progress;
+
+    const partialRoute: RoutePoint[] = [route[0]];
+
+    for (const segment of routeMeasurements.segments) {
+      const segmentEndDistance =
+        segment.startDistance + segment.length;
+
+      if (targetDistance >= segmentEndDistance) {
+        partialRoute.push(segment.end);
+        continue;
       }
 
-      const elapsedTime = currentTime - startTime;
-      const nextProgress = Math.min(elapsedTime / duration, 1);
+      const distanceIntoSegment =
+        targetDistance - segment.startDistance;
 
-      setProgress(nextProgress);
+      const segmentProgress =
+        segment.length === 0
+          ? 0
+          : distanceIntoSegment / segment.length;
 
-      if (nextProgress < 1) {
-        animationFrame = window.requestAnimationFrame(animate);
+      const partialPoint: RoutePoint = [
+        segment.start[0] +
+          (segment.end[0] - segment.start[0]) *
+            segmentProgress,
+        segment.start[1] +
+          (segment.end[1] - segment.start[1]) *
+            segmentProgress,
+      ];
+
+      partialRoute.push(partialPoint);
+      break;
+    }
+
+    return partialRoute;
+  };
+
+  const [visibleRoute, setVisibleRoute] = useState<
+    RoutePoint[]
+  >(
+    reverse
+      ? route
+      : route.length > 0
+        ? [route[0], route[0]]
+        : [],
+  );
+
+  useEffect(() => {
+    let startingTime: number | undefined;
+
+    setVisibleRoute(
+      reverse
+        ? route
+        : route.length > 0
+          ? [route[0], route[0]]
+          : [],
+    );
+
+    const animate = (currentTime: number) => {
+      if (startingTime === undefined) {
+        startingTime = currentTime;
+      }
+
+      const rawProgress = Math.min(
+        (currentTime - startingTime) / duration,
+        1,
+      );
+
+      const visibleProgress = reverse
+        ? 1 - rawProgress
+        : rawProgress;
+
+      setVisibleRoute(
+        getPartialRoute(visibleProgress),
+      );
+
+      if (rawProgress < 1) {
+        animationFrameRef.current =
+          window.requestAnimationFrame(animate);
+
         return;
       }
 
-      if (!hasCompleted.current) {
-        hasCompleted.current = true;
-        onComplete?.();
-      }
+      animationFrameRef.current = null;
+      onComplete?.();
     };
 
-    animationFrame = window.requestAnimationFrame(animate);
+    animationFrameRef.current =
+      window.requestAnimationFrame(animate);
 
     return () => {
-      window.cancelAnimationFrame(animationFrame);
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(
+          animationFrameRef.current,
+        );
+      }
     };
-  }, [duration, onComplete]);
-
-  const visibleRoute = getPartialRoute(
+  }, [
+    duration,
+    onComplete,
+    reverse,
     route,
-    segments,
-    totalLength,
-    progress,
-  );
+    routeMeasurements,
+  ]);
 
   if (visibleRoute.length < 2) {
     return null;
@@ -157,8 +212,8 @@ function AnimatedRoute({
       <Polyline
         positions={visibleRoute}
         pathOptions={{
-          color: "#ffffff",
-          weight: 20,
+          color: "#FFFFFF",
+          weight: 26,
           opacity: casingOpacity,
           lineCap: "round",
           lineJoin: "round",
@@ -170,7 +225,7 @@ function AnimatedRoute({
         positions={visibleRoute}
         pathOptions={{
           color: "#E76F51",
-          weight: 12,
+          weight: 16,
           opacity: routeOpacity,
           lineCap: "round",
           lineJoin: "round",

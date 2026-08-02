@@ -1,5 +1,3 @@
-import useFadeIn from "./useFadeIn";
-
 import {
   useCallback,
   useEffect,
@@ -12,27 +10,24 @@ import {
   CircleMarker,
   Marker,
 } from "react-leaflet";
-import type { RoutePoint } from "./routeData";
 
-type DestinationMarkerProps = {
+import type { RoutePoint } from "./routeData";
+import useFadeIn from "./useFadeIn";
+
+type PreviewDestinationMarkerProps = {
   position: RoutePoint;
   name: string;
   price: string;
-  selected: boolean;
-  arrived: boolean;
-  onSelect: () => void;
 };
 
-function DestinationMarker({
+function PreviewDestinationMarker({
   position,
   name,
   price,
-  selected,
-  arrived,
-  onSelect,
-}: DestinationMarkerProps) {
+}: PreviewDestinationMarkerProps) {
   const [radius, setRadius] = useState(40);
   const [hovered, setHovered] = useState(false);
+
   const fadeOpacity = useFadeIn(700);
 
   const radiusRef = useRef(40);
@@ -40,14 +35,8 @@ function DestinationMarker({
   const animationFrameRef =
     useRef<number | null>(null);
 
-  const poppingRef = useRef(false);
-
   const animateRadius = useCallback(
-    (
-      targetRadius: number,
-      duration: number,
-      onComplete?: () => void,
-    ) => {
+    (targetRadius: number, duration: number) => {
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(
           animationFrameRef.current,
@@ -77,12 +66,9 @@ function DestinationMarker({
         if (progress < 1) {
           animationFrameRef.current =
             window.requestAnimationFrame(animate);
-
-          return;
+        } else {
+          animationFrameRef.current = null;
         }
-
-        animationFrameRef.current = null;
-        onComplete?.();
       };
 
       animationFrameRef.current =
@@ -90,6 +76,10 @@ function DestinationMarker({
     },
     [],
   );
+
+  useEffect(() => {
+    animateRadius(hovered ? 46 : 40, 180);
+  }, [animateRadius, hovered]);
 
   useEffect(() => {
     return () => {
@@ -100,53 +90,6 @@ function DestinationMarker({
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (poppingRef.current) {
-      return;
-    }
-
-    if (arrived) {
-      setHovered(false);
-      animateRadius(24, 300);
-      return;
-    }
-
-    if (hovered) {
-      animateRadius(selected ? 48 : 46, 180);
-    } else {
-      animateRadius(selected ? 43 : 40, 180);
-    }
-  }, [
-    animateRadius,
-    arrived,
-    hovered,
-    selected,
-  ]);
-
-  const handleClick = useCallback(() => {
-    if (
-      selected ||
-      arrived ||
-      poppingRef.current
-    ) {
-      return;
-    }
-
-    poppingRef.current = true;
-    onSelect();
-
-    animateRadius(56, 140, () => {
-      animateRadius(43, 280, () => {
-        poppingRef.current = false;
-      });
-    });
-  }, [
-    animateRadius,
-    arrived,
-    onSelect,
-    selected,
-  ]);
 
   const priceFontSize = 30 * (radius / 40);
 
@@ -190,7 +133,7 @@ function DestinationMarker({
         html: `
           <div style="
             width: 220px;
-            text-align: left;
+            text-align: center;
             pointer-events: none;
             white-space: nowrap;
 
@@ -210,10 +153,7 @@ function DestinationMarker({
           </div>
         `,
         iconSize: [220, 60],
-
-        // A negative horizontal anchor places
-        // the label to the right of the circle.
-        iconAnchor: [-58, 30],
+        iconAnchor: [110, 92],
       }),
     [name],
   );
@@ -222,15 +162,14 @@ function DestinationMarker({
     <>
       <CircleMarker
         center={position}
-        radius={radius + (arrived ? 8 : 7)}
+        radius={radius + 7}
         pathOptions={{
           color: "#FFFFFF",
           fillColor: "#FFFFFF",
+          opacity: fadeOpacity,
           fillOpacity: fadeOpacity,
           weight: 0,
           interactive: false,
-          opacity: fadeOpacity,
-          fillOpacity: fadeOpacity,
         }}
       />
 
@@ -239,37 +178,23 @@ function DestinationMarker({
         radius={radius}
         pathOptions={{
           color: "#E76F51",
-          fillColor: arrived
-            ? "#E76F51"
-            : selected
-              ? "#FFF8F5"
-              : "#FFFFFF",
-          fillOpacity: fadeOpacity,
-          weight: arrived ? 0 : 6,
+          fillColor: "#FFFFFF",
           opacity: fadeOpacity,
           fillOpacity: fadeOpacity,
+          weight: 6,
         }}
         eventHandlers={{
-          mouseover: () => {
-            if (!arrived) {
-              setHovered(true);
-            }
-          },
-          mouseout: () => {
-            setHovered(false);
-          },
-          click: handleClick,
+          mouseover: () => setHovered(true),
+          mouseout: () => setHovered(false),
         }}
       />
 
-      {!arrived && (
-        <Marker
-          position={position}
-          icon={priceIcon}
-          opacity={fadeOpacity}
-          interactive={false}
-        />
-      )}
+      <Marker
+        position={position}
+        icon={priceIcon}
+        opacity={fadeOpacity}
+        interactive={false}
+      />
 
       <Marker
         position={position}
@@ -281,4 +206,4 @@ function DestinationMarker({
   );
 }
 
-export default DestinationMarker;
+export default PreviewDestinationMarker;
