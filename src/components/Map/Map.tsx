@@ -19,11 +19,8 @@ import PreviewDestinationMarker from "./PreviewDestinationMarker";
 import RouteCamera from "./RouteCamera";
 import StayLengthCard from "./StayLengthCard";
 
-import {
-  barcelonaDestinations,
-  valenciaDestinations,
-  type Destination,
-} from "./destinationData";
+import type { Destination } from "./destinationData";
+import { getCityDestinations } from "./journeyData";
 
 import {
   barcelonaDotIcon,
@@ -33,6 +30,12 @@ import {
 import { getRouteDuration } from "./routeAnimation";
 import { barcelonaPosition } from "./routeData";
 import type { TripState } from "./tripTypes";
+
+const barcelonaDestinations =
+  getCityDestinations("barcelona");
+
+const valenciaDestinations =
+  getCityDestinations("valencia");
 
 const valencia = barcelonaDestinations.find(
   (destination) => destination.id === "valencia",
@@ -322,8 +325,6 @@ function Map() {
           name="route-lines"
           style={{ zIndex: 350 }}
         >
-          {/* Barcelona preview routes */}
-
           {inBarcelonaPhase && (
             <PreviewRoute
               destination={valencia}
@@ -370,8 +371,6 @@ function Map() {
               ),
             )}
 
-          {/* Completed Barcelona to Valencia route */}
-
           {(valenciaSelected ||
             valenciaStayConfirmed) && (
             <SelectedRoute
@@ -381,8 +380,6 @@ function Map() {
               }
             />
           )}
-
-          {/* Valencia route options */}
 
           {inValenciaPhase &&
             valenciaActiveDestinations.map(
@@ -424,8 +421,6 @@ function Map() {
                 );
               },
             )}
-
-          {/* Solid route draws over selected preview */}
 
           {selectedValenciaDestination && (
             <SelectedRoute
