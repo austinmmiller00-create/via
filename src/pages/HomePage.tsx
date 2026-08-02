@@ -2,14 +2,15 @@ import Map from "../components/Map/Map";
 
 function HomePage() {
   return (
-    <div
+    <main
       style={{
-        width: "100vw",
-        height: "100vh",
+        position: "fixed",
+        inset: 0,
+        overflow: "hidden",
       }}
     >
       <Map />
-    </div>
+    </main>
   );
 }
 
