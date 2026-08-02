@@ -6,7 +6,10 @@ import {
   useState,
 } from "react";
 import L from "leaflet";
-import { CircleMarker, Marker } from "react-leaflet";
+import {
+  CircleMarker,
+  Marker,
+} from "react-leaflet";
 import type { RoutePoint } from "./routeData";
 
 type DestinationMarkerProps = {
@@ -14,6 +17,7 @@ type DestinationMarkerProps = {
   name: string;
   price: string;
   selected: boolean;
+  arrived: boolean;
   onSelect: () => void;
 };
 
@@ -22,13 +26,17 @@ function DestinationMarker({
   name,
   price,
   selected,
+  arrived,
   onSelect,
 }: DestinationMarkerProps) {
-  const [radius, setRadius] = useState(46);
+  const [radius, setRadius] = useState(40);
   const [hovered, setHovered] = useState(false);
 
-  const radiusRef = useRef(46);
-  const animationFrameRef = useRef<number | null>(null);
+  const radiusRef = useRef(40);
+
+  const animationFrameRef =
+    useRef<number | null>(null);
+
   const poppingRef = useRef(false);
 
   const animateRadius = useCallback(
@@ -38,7 +46,9 @@ function DestinationMarker({
       onComplete?: () => void,
     ) => {
       if (animationFrameRef.current !== null) {
-        window.cancelAnimationFrame(animationFrameRef.current);
+        window.cancelAnimationFrame(
+          animationFrameRef.current,
+        );
       }
 
       const startingRadius = radiusRef.current;
@@ -55,7 +65,8 @@ function DestinationMarker({
 
         const nextRadius =
           startingRadius +
-          (targetRadius - startingRadius) * easedProgress;
+          (targetRadius - startingRadius) *
+            easedProgress;
 
         radiusRef.current = nextRadius;
         setRadius(nextRadius);
@@ -63,6 +74,7 @@ function DestinationMarker({
         if (progress < 1) {
           animationFrameRef.current =
             window.requestAnimationFrame(animate);
+
           return;
         }
 
@@ -91,38 +103,58 @@ function DestinationMarker({
       return;
     }
 
-    if (hovered) {
-      animateRadius(selected ? 55 : 53, 180);
-    } else {
-      animateRadius(selected ? 50 : 46, 180);
+    if (arrived) {
+      setHovered(false);
+      animateRadius(24, 300);
+      return;
     }
-  }, [animateRadius, hovered, selected]);
+
+    if (hovered) {
+      animateRadius(selected ? 48 : 46, 180);
+    } else {
+      animateRadius(selected ? 43 : 40, 180);
+    }
+  }, [
+    animateRadius,
+    arrived,
+    hovered,
+    selected,
+  ]);
 
   const handleClick = useCallback(() => {
-    if (selected || poppingRef.current) {
+    if (
+      selected ||
+      arrived ||
+      poppingRef.current
+    ) {
       return;
     }
 
     poppingRef.current = true;
     onSelect();
 
-    animateRadius(64, 140, () => {
-      animateRadius(50, 280, () => {
+    animateRadius(56, 140, () => {
+      animateRadius(43, 280, () => {
         poppingRef.current = false;
       });
     });
-  }, [animateRadius, onSelect, selected]);
+  }, [
+    animateRadius,
+    arrived,
+    onSelect,
+    selected,
+  ]);
 
-  const priceFontSize = 34 * (radius / 46);
+  const priceFontSize = 30 * (radius / 40);
 
-    const priceIcon = useMemo(
+  const priceIcon = useMemo(
     () =>
-        L.divIcon({
+      L.divIcon({
         className: "",
         html: `
-            <div style="
-            width: 106px;
-            height: 106px;
+          <div style="
+            width: 96px;
+            height: 96px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -136,17 +168,17 @@ function DestinationMarker({
             color: #24324A;
 
             text-shadow:
-                0 2px 0 rgba(255,255,255,1),
-                0 3px 8px rgba(36,50,74,0.18);
-            ">
+              0 2px 0 rgba(255,255,255,1),
+              0 3px 8px rgba(36,50,74,0.18);
+          ">
             ${price}
-            </div>
+          </div>
         `,
-        iconSize: [106, 106],
-        iconAnchor: [53, 53],
-        }),
+        iconSize: [96, 96],
+        iconAnchor: [48, 48],
+      }),
     [price, priceFontSize],
-    );
+  );
 
   const labelIcon = useMemo(
     () =>
@@ -155,12 +187,12 @@ function DestinationMarker({
         html: `
           <div style="
             width: 220px;
-            text-align: right;
+            text-align: left;
             pointer-events: none;
             white-space: nowrap;
 
             font-family: Manrope, sans-serif;
-            font-size: 46px;
+            font-size: 42px;
             font-weight: 800;
             letter-spacing: -2px;
             line-height: 1;
@@ -175,7 +207,10 @@ function DestinationMarker({
           </div>
         `,
         iconSize: [220, 60],
-        iconAnchor: [300, 30],
+
+        // A negative horizontal anchor places
+        // the label to the right of the circle.
+        iconAnchor: [-58, 30],
       }),
     [name],
   );
@@ -184,10 +219,10 @@ function DestinationMarker({
     <>
       <CircleMarker
         center={position}
-        radius={radius + 8}
+        radius={radius + (arrived ? 8 : 7)}
         pathOptions={{
-          color: "rgba(255,255,255,0.95)",
-          fillColor: "rgba(255,255,255,0.95)",
+          color: "#FFFFFF",
+          fillColor: "#FFFFFF",
           fillOpacity: 1,
           weight: 0,
           interactive: false,
@@ -199,22 +234,34 @@ function DestinationMarker({
         radius={radius}
         pathOptions={{
           color: "#E76F51",
-          fillColor: selected ? "#FFF8F5" : "#FFFFFF",
+          fillColor: arrived
+            ? "#E76F51"
+            : selected
+              ? "#FFF8F5"
+              : "#FFFFFF",
           fillOpacity: 1,
-          weight: 7,
+          weight: arrived ? 0 : 6,
         }}
         eventHandlers={{
-          mouseover: () => setHovered(true),
-          mouseout: () => setHovered(false),
+          mouseover: () => {
+            if (!arrived) {
+              setHovered(true);
+            }
+          },
+          mouseout: () => {
+            setHovered(false);
+          },
           click: handleClick,
         }}
       />
 
-      <Marker
-        position={position}
-        icon={priceIcon}
-        interactive={false}
-      />
+      {!arrived && (
+        <Marker
+          position={position}
+          icon={priceIcon}
+          interactive={false}
+        />
+      )}
 
       <Marker
         position={position}

@@ -1,4 +1,7 @@
-import { useCallback, useState } from "react";
+import {
+  useCallback,
+  useState,
+} from "react";
 import {
   MapContainer,
   Marker,
@@ -13,7 +16,10 @@ import "leaflet/dist/leaflet.css";
 import AnimatedRoute from "./AnimatedRoute";
 import DestinationMarker from "./DestinationMarker";
 import RouteCamera from "./RouteCamera";
-import { barcelonaIcon } from "./mapIcons";
+import {
+  barcelonaDotIcon,
+  barcelonaIcon,
+} from "./mapIcons";
 import {
   barcelonaPosition,
   barcelonaToValenciaRoute,
@@ -29,18 +35,27 @@ function Map() {
   const [valenciaSelected, setValenciaSelected] =
     useState(false);
 
+  const [valenciaArrived, setValenciaArrived] =
+    useState(false);
+
   const finishPreviewAnimation = useCallback(() => {
     setShowValencia(true);
   }, []);
 
   const selectValencia = useCallback(() => {
     setValenciaSelected(true);
+    setValenciaArrived(false);
   }, []);
+
+  const finishSelectionAnimation =
+    useCallback(() => {
+      setValenciaArrived(true);
+    }, []);
 
   return (
     <MapContainer
       center={[40.45, 0.9]}
-      zoom={8}
+      zoom={7.2}
       minZoom={5}
       maxZoom={10}
       zoomSnap={0.1}
@@ -74,6 +89,9 @@ function Map() {
             duration={selectionDuration}
             casingOpacity={0.95}
             routeOpacity={0.98}
+            onComplete={
+              finishSelectionAnimation
+            }
           />
         )}
       </Pane>
@@ -87,7 +105,11 @@ function Map() {
 
       <Marker
         position={barcelonaPosition}
-        icon={barcelonaIcon}
+        icon={
+          valenciaSelected
+            ? barcelonaDotIcon
+            : barcelonaIcon
+        }
         interactive={false}
       />
 
@@ -97,6 +119,7 @@ function Map() {
           name="Valencia"
           price="€25"
           selected={valenciaSelected}
+          arrived={valenciaArrived}
           onSelect={selectValencia}
         />
       )}

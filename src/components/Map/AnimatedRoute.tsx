@@ -158,7 +158,7 @@ function AnimatedRoute({
         positions={visibleRoute}
         pathOptions={{
           color: "#ffffff",
-          weight: 34,
+          weight: 20,
           opacity: casingOpacity,
           lineCap: "round",
           lineJoin: "round",
@@ -170,7 +170,7 @@ function AnimatedRoute({
         positions={visibleRoute}
         pathOptions={{
           color: "#E76F51",
-          weight: 24,
+          weight: 12,
           opacity: routeOpacity,
           lineCap: "round",
           lineJoin: "round",
