@@ -27,6 +27,7 @@ type DestinationMarkerProps = {
   price: string;
   selected: boolean;
   arrived: boolean;
+  stayDays?: number;
   labelPosition?: LabelPosition;
   onSelect: () => void;
 };
@@ -37,6 +38,7 @@ function DestinationMarker({
   price,
   selected,
   arrived,
+  stayDays,
   labelPosition = "right",
   onSelect,
 }: DestinationMarkerProps) {
@@ -227,6 +229,38 @@ function DestinationMarker({
     [price, priceFontSize],
   );
 
+  const stayIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: "",
+        html: `
+          <div style="
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+
+            font-family: Manrope, sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1;
+            color: #FFFFFF;
+
+            text-shadow:
+              0 2px 5px rgba(36,50,74,0.25);
+          ">
+            ${stayDays ?? ""}
+          </div>
+        `,
+        iconSize: [50, 50],
+        iconAnchor: [25, 25],
+      }),
+    [stayDays],
+  );
+
   const labelIcon = useMemo(() => {
     const configurations = {
       above: {
@@ -334,6 +368,15 @@ function DestinationMarker({
         <Marker
           position={position}
           icon={priceIcon}
+          opacity={fadeOpacity}
+          interactive={false}
+        />
+      )}
+
+      {arrived && stayDays !== undefined && (
+        <Marker
+          position={position}
+          icon={stayIcon}
           opacity={fadeOpacity}
           interactive={false}
         />
