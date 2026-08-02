@@ -10,6 +10,7 @@ import {
   palmaPosition,
   valenciaPosition,
   valenciaToAlicanteRoute,
+  valenciaToMadridRoute,
   zaragozaPosition,
 } from "./routeData";
 
@@ -81,6 +82,15 @@ export const valenciaDestinations: Destination[] = [
     position: alicantePosition,
     route: valenciaToAlicanteRoute,
     active: true,
+    transport: "train",
+  },
+  {
+    id: "madrid",
+    name: "Madrid",
+    price: "€32",
+    position: madridPosition,
+    route: valenciaToMadridRoute,
+    active: false,
     transport: "train",
   },
 ];

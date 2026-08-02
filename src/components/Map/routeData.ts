@@ -118,6 +118,20 @@ export const valenciaToAlicanteRoute: RoutePoint[] = [
   [38.3452, -0.481],
 ];
 
+export const valenciaToMadridRoute: RoutePoint[] = [
+  [39.4699, -0.3763],
+  [39.54, -0.72],
+  [39.62, -1.08],
+  [39.75, -1.43],
+  [39.88, -1.78],
+  [40.02, -2.12],
+  [40.17, -2.46],
+  [40.28, -2.79],
+  [40.36, -3.12],
+  [40.4, -3.43],
+  [40.4168, -3.7038],
+];
+
 /*
   FLIGHT ROUTE
 

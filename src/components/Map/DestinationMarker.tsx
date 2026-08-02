@@ -29,6 +29,7 @@ type DestinationMarkerProps = {
   arrived: boolean;
   stayDays?: number;
   labelPosition?: LabelPosition;
+  showLabel?: boolean;
   onSelect: () => void;
 };
 
@@ -41,6 +42,7 @@ function DestinationMarker({
   stayDays,
   labelPosition = "right",
   onSelect,
+  showLabel = true,
 }: DestinationMarkerProps) {
   const destinationStyle = mapStyle.destination;
 
@@ -252,7 +254,7 @@ function DestinationMarker({
             text-shadow:
               0 2px 5px rgba(36,50,74,0.25);
           ">
-            ${stayDays ?? ""}
+            ${stayDays ?? ""}d
           </div>
         `,
         iconSize: [50, 50],
@@ -382,12 +384,14 @@ function DestinationMarker({
         />
       )}
 
-      <Marker
-        position={position}
-        icon={labelIcon}
-        opacity={fadeOpacity}
-        interactive={false}
-      />
+      {showLabel && (
+        <Marker
+            position={position}
+            icon={labelIcon}
+            opacity={fadeOpacity}
+            interactive={false}
+        />
+        )}
     </>
   );
 }
