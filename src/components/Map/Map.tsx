@@ -17,7 +17,10 @@ import AnimatedRoute from "./AnimatedRoute";
 import DestinationMarker from "./DestinationMarker";
 import PreviewDestinationMarker from "./PreviewDestinationMarker";
 import RouteCamera from "./RouteCamera";
-import { barcelonaDestinations } from "./destinationData";
+import {
+  barcelonaDestinations,
+  type Destination,
+} from "./destinationData";
 import {
   barcelonaDotIcon,
   barcelonaIcon,
@@ -28,15 +31,44 @@ const previewDuration = 4000;
 const selectionDuration = 3000;
 const retractionDuration = 1800;
 
-const valencia = barcelonaDestinations[0];
-const zaragoza = barcelonaDestinations[1];
+const valencia = barcelonaDestinations.find(
+  (destination) => destination.id === "valencia",
+)!;
+
+const previewDestinations =
+  barcelonaDestinations.filter(
+    (destination) => !destination.active,
+  );
+
+type PreviewRouteProps = {
+  destination: Destination;
+  onComplete: (id: string) => void;
+};
+
+function PreviewRoute({
+  destination,
+  onComplete,
+}: PreviewRouteProps) {
+  const finishRoute = useCallback(() => {
+    onComplete(destination.id);
+  }, [destination.id, onComplete]);
+
+  return (
+    <AnimatedRoute
+      route={destination.route}
+      duration={previewDuration}
+      casingOpacity={0.45}
+      routeOpacity={0.4}
+      onComplete={finishRoute}
+    />
+  );
+}
 
 function Map() {
-  const [showValencia, setShowValencia] =
-    useState(false);
-
-  const [showZaragoza, setShowZaragoza] =
-    useState(false);
+  const [
+    visibleDestinationIds,
+    setVisibleDestinationIds,
+  ] = useState<string[]>([]);
 
   const [valenciaSelected, setValenciaSelected] =
     useState(false);
@@ -44,25 +76,22 @@ function Map() {
   const [valenciaArrived, setValenciaArrived] =
     useState(false);
 
-  const [
-    zaragozaRouteRetracted,
-    setZaragozaRouteRetracted,
-  ] = useState(false);
+  const showDestination = useCallback(
+    (destinationId: string) => {
+      setVisibleDestinationIds((currentIds) => {
+        if (currentIds.includes(destinationId)) {
+          return currentIds;
+        }
 
-  const finishValenciaPreview =
-    useCallback(() => {
-      setShowValencia(true);
-    }, []);
-
-  const finishZaragozaPreview =
-    useCallback(() => {
-      setShowZaragoza(true);
-    }, []);
+        return [...currentIds, destinationId];
+      });
+    },
+    [],
+  );
 
   const selectValencia = useCallback(() => {
     setValenciaSelected(true);
     setValenciaArrived(false);
-    setZaragozaRouteRetracted(false);
   }, []);
 
   const finishSelectionAnimation =
@@ -70,15 +99,10 @@ function Map() {
       setValenciaArrived(true);
     }, []);
 
-  const finishZaragozaRetraction =
-    useCallback(() => {
-      setZaragozaRouteRetracted(true);
-    }, []);
-
   return (
     <MapContainer
-      center={[40.75, 0.65]}
-      zoom={7.2}
+      center={[41.25, 0.1]}
+      zoom={6.7}
       minZoom={5}
       maxZoom={10}
       zoomSnap={0.1}
@@ -98,36 +122,29 @@ function Map() {
         name="route-lines"
         style={{ zIndex: 350 }}
       >
-        <AnimatedRoute
-          route={valencia.route}
-          duration={previewDuration}
-          casingOpacity={0.45}
-          routeOpacity={0.4}
-          onComplete={finishValenciaPreview}
-        />
-
-        {!valenciaSelected && (
-          <AnimatedRoute
-            route={zaragoza.route}
-            duration={previewDuration}
-            casingOpacity={0.45}
-            routeOpacity={0.4}
-            onComplete={finishZaragozaPreview}
-          />
-        )}
+        {!valenciaSelected &&
+          barcelonaDestinations.map(
+            (destination) => (
+              <PreviewRoute
+                key={destination.id}
+                destination={destination}
+                onComplete={showDestination}
+              />
+            ),
+          )}
 
         {valenciaSelected &&
-          !zaragozaRouteRetracted && (
-            <AnimatedRoute
-              route={zaragoza.route}
-              duration={retractionDuration}
-              casingOpacity={0.45}
-              routeOpacity={0.4}
-              reverse
-              onComplete={
-                finishZaragozaRetraction
-              }
-            />
+          previewDestinations.map(
+            (destination) => (
+              <AnimatedRoute
+                key={`retract-${destination.id}`}
+                route={destination.route}
+                duration={retractionDuration}
+                casingOpacity={0.45}
+                routeOpacity={0.4}
+                reverse
+              />
+            ),
           )}
 
         {valenciaSelected && (
@@ -160,7 +177,9 @@ function Map() {
         interactive={false}
       />
 
-      {showValencia && (
+      {visibleDestinationIds.includes(
+        valencia.id,
+      ) && (
         <DestinationMarker
           position={valencia.position}
           name={valencia.name}
@@ -171,13 +190,20 @@ function Map() {
         />
       )}
 
-      {showZaragoza && !valenciaSelected && (
-        <PreviewDestinationMarker
-          position={zaragoza.position}
-          name={zaragoza.name}
-          price={zaragoza.price}
-        />
-      )}
+      {!valenciaSelected &&
+        previewDestinations.map(
+          (destination) =>
+            visibleDestinationIds.includes(
+              destination.id,
+            ) && (
+              <PreviewDestinationMarker
+                key={destination.id}
+                position={destination.position}
+                name={destination.name}
+                price={destination.price}
+              />
+            ),
+        )}
     </MapContainer>
   );
 }

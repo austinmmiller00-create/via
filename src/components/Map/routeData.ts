@@ -15,6 +15,21 @@ export const zaragozaPosition: RoutePoint = [
   -0.8891,
 ];
 
+export const madridPosition: RoutePoint = [
+  40.4168,
+  -3.7038,
+];
+
+export const montpellierPosition: RoutePoint = [
+  43.6108,
+  3.8767,
+];
+
+export const palmaPosition: RoutePoint = [
+  39.5696,
+  2.6502,
+];
+
 export const barcelonaToValenciaRoute: RoutePoint[] = [
   [41.3874, 2.1686],
   [41.32, 2.05],
@@ -53,4 +68,56 @@ export const barcelonaToZaragozaRoute: RoutePoint[] = [
   [41.648, -0.31],
   [41.6485, -0.59],
   [41.6488, -0.8891],
+];
+
+export const barcelonaToMadridRoute: RoutePoint[] = [
+  [41.3874, 2.1686],
+  [41.43, 1.85],
+  [41.5, 1.5],
+  [41.55, 1.1],
+  [41.6, 0.65],
+  [41.63, 0.2],
+  [41.6488, -0.3],
+  [41.6488, -0.8891],
+  [41.52, -1.3],
+  [41.34, -1.75],
+  [41.12, -2.15],
+  [40.91, -2.55],
+  [40.72, -2.95],
+  [40.56, -3.32],
+  [40.4168, -3.7038],
+];
+
+export const barcelonaToMontpellierRoute: RoutePoint[] = [
+  [41.3874, 2.1686],
+  [41.55, 2.25],
+  [41.75, 2.38],
+  [41.98, 2.55],
+  [42.2, 2.7],
+  [42.42, 2.82],
+  [42.65, 2.9],
+  [42.88, 3.0],
+  [43.1, 3.18],
+  [43.3, 3.38],
+  [43.47, 3.62],
+  [43.6108, 3.8767],
+];
+
+/*
+  Curved flight arc from Barcelona to Palma.
+  The route bows east over the Mediterranean
+  before curving back toward Mallorca.
+*/
+export const barcelonaToPalmaRoute: RoutePoint[] = [
+  [41.3874, 2.1686],
+  [41.27, 2.43],
+  [41.1, 2.68],
+  [40.9, 2.9],
+  [40.67, 3.07],
+  [40.43, 3.16],
+  [40.18, 3.15],
+  [39.95, 3.05],
+  [39.76, 2.88],
+  [39.63, 2.72],
+  [39.5696, 2.6502],
 ];
