@@ -1,6 +1,8 @@
 import {
   barcelonaToValenciaRoute,
+  barcelonaToZaragozaRoute,
   valenciaPosition,
+  zaragozaPosition,
 } from "./routeData";
 import type { RoutePoint } from "./routeData";
 
@@ -21,5 +23,13 @@ export const barcelonaDestinations: Destination[] = [
     position: valenciaPosition,
     route: barcelonaToValenciaRoute,
     active: true,
+  },
+  {
+    id: "zaragoza",
+    name: "Zaragoza",
+    price: "€30",
+    position: zaragozaPosition,
+    route: barcelonaToZaragozaRoute,
+    active: false,
   },
 ];

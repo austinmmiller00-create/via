@@ -1,7 +1,19 @@
 export type RoutePoint = [number, number];
 
-export const barcelonaPosition: RoutePoint = [41.3874, 2.1686];
-export const valenciaPosition: RoutePoint = [39.4699, -0.3763];
+export const barcelonaPosition: RoutePoint = [
+  41.3874,
+  2.1686,
+];
+
+export const valenciaPosition: RoutePoint = [
+  39.4699,
+  -0.3763,
+];
+
+export const zaragozaPosition: RoutePoint = [
+  41.6488,
+  -0.8891,
+];
 
 export const barcelonaToValenciaRoute: RoutePoint[] = [
   [41.3874, 2.1686],
@@ -26,4 +38,19 @@ export const barcelonaToValenciaRoute: RoutePoint[] = [
   [39.61, -0.3],
   [39.53, -0.34],
   [39.4699, -0.3763],
+];
+
+export const barcelonaToZaragozaRoute: RoutePoint[] = [
+  [41.3874, 2.1686],
+  [41.44, 1.95],
+  [41.49, 1.7],
+  [41.53, 1.43],
+  [41.56, 1.16],
+  [41.59, 0.88],
+  [41.61, 0.58],
+  [41.63, 0.27],
+  [41.64, -0.03],
+  [41.648, -0.31],
+  [41.6485, -0.59],
+  [41.6488, -0.8891],
 ];
