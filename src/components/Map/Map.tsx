@@ -21,6 +21,7 @@ import StayLengthCard from "./StayLengthCard";
 
 import {
   barcelonaDestinations,
+  valenciaDestinations,
   type Destination,
 } from "./destinationData";
 
@@ -29,20 +30,38 @@ import {
   barcelonaIcon,
 } from "./mapIcons";
 
+import {
+  getRouteDuration,
+} from "./routeAnimation";
+
 import { barcelonaPosition } from "./routeData";
 import type { TripState } from "./tripTypes";
-
-const previewDuration = 4000;
-const selectionDuration = 3000;
-const retractionDuration = 1200;
 
 const valencia = barcelonaDestinations.find(
   (destination) => destination.id === "valencia",
 )!;
 
-const previewDestinations =
+const alicante = valenciaDestinations.find(
+  (destination) => destination.id === "alicante",
+)!;
+
+const barcelonaPreviewDestinations =
   barcelonaDestinations.filter(
     (destination) => !destination.active,
+  );
+
+const valenciaSelectionDuration =
+  getRouteDuration(
+    valencia.route,
+    valencia.transport,
+    "selection",
+  );
+
+const alicanteSelectionDuration =
+  getRouteDuration(
+    alicante.route,
+    alicante.transport,
+    "selection",
   );
 
 const initialTripState: TripState = {
@@ -65,10 +84,16 @@ function PreviewRoute({
     onComplete(destination.id);
   }, [destination.id, onComplete]);
 
+  const duration = getRouteDuration(
+    destination.route,
+    destination.transport,
+    "preview",
+  );
+
   return (
     <AnimatedRoute
       route={destination.route}
-      duration={previewDuration}
+      duration={duration}
       casingOpacity={0.45}
       routeOpacity={0.4}
       onComplete={finishRoute}
@@ -85,18 +110,34 @@ function Map() {
   const [tripState, setTripState] =
     useState<TripState>(initialTripState);
 
+  const inBarcelonaPhase =
+    tripState.currentCityId === "barcelona";
+
   const valenciaSelected =
     tripState.selectedDestinationId === valencia.id;
 
+  const alicanteSelected =
+    tripState.selectedDestinationId === alicante.id;
+
   const valenciaArrived =
     tripState.arrivedDestinationId === valencia.id;
+
+  const alicanteArrived =
+    tripState.arrivedDestinationId === alicante.id;
 
   const valenciaStayDays = tripState.stops.find(
     (stop) => stop.cityId === valencia.id,
   )?.days;
 
+  const alicanteStayDays = tripState.stops.find(
+    (stop) => stop.cityId === alicante.id,
+  )?.days;
+
   const valenciaStayConfirmed =
     valenciaStayDays !== undefined;
+
+  const alicanteStayConfirmed =
+    alicanteStayDays !== undefined;
 
   const showDestination = useCallback(
     (destinationId: string) => {
@@ -111,34 +152,48 @@ function Map() {
     [],
   );
 
-  const selectValencia = useCallback(() => {
-    setTripState((currentState) => ({
-      ...currentState,
-      selectedDestinationId: valencia.id,
-      arrivedDestinationId: null,
-    }));
-  }, []);
+  const selectDestination = useCallback(
+    (destinationId: string) => {
+      setTripState((currentState) => ({
+        ...currentState,
+        selectedDestinationId: destinationId,
+        arrivedDestinationId: null,
+      }));
+    },
+    [],
+  );
 
-  const finishSelectionAnimation =
+  const finishValenciaSelection =
     useCallback(() => {
       setTripState((currentState) => ({
         ...currentState,
-        arrivedDestinationId:
-          currentState.selectedDestinationId,
+        arrivedDestinationId: valencia.id,
       }));
     }, []);
 
-  const confirmValenciaStay = useCallback(
-    (days: number) => {
+  const finishAlicanteSelection =
+    useCallback(() => {
+      setTripState((currentState) => ({
+        ...currentState,
+        arrivedDestinationId: alicante.id,
+      }));
+    }, []);
+
+  const confirmStay = useCallback(
+    (
+      destination: Destination,
+      days: number,
+    ) => {
       setTripState((currentState) => {
-        const existingStop =
+        const stopAlreadyExists =
           currentState.stops.some(
-            (stop) => stop.cityId === valencia.id,
+            (stop) =>
+              stop.cityId === destination.id,
           );
 
-        const updatedStops = existingStop
+        const updatedStops = stopAlreadyExists
           ? currentState.stops.map((stop) =>
-              stop.cityId === valencia.id
+              stop.cityId === destination.id
                 ? {
                     ...stop,
                     days,
@@ -148,15 +203,15 @@ function Map() {
           : [
               ...currentState.stops,
               {
-                cityId: valencia.id,
-                cityName: valencia.name,
+                cityId: destination.id,
+                cityName: destination.name,
                 days,
               },
             ];
 
         return {
           ...currentState,
-          currentCityId: valencia.id,
+          currentCityId: destination.id,
           stops: updatedStops,
         };
       });
@@ -199,8 +254,9 @@ function Map() {
             onComplete={showDestination}
           />
 
-          {!valenciaSelected &&
-            previewDestinations.map(
+          {inBarcelonaPhase &&
+            !valenciaSelected &&
+            barcelonaPreviewDestinations.map(
               (destination) => (
                 <PreviewRoute
                   key={destination.id}
@@ -210,13 +266,18 @@ function Map() {
               ),
             )}
 
-          {valenciaSelected &&
-            previewDestinations.map(
+          {inBarcelonaPhase &&
+            valenciaSelected &&
+            barcelonaPreviewDestinations.map(
               (destination) => (
                 <AnimatedRoute
                   key={`retract-${destination.id}`}
                   route={destination.route}
-                  duration={retractionDuration}
+                  duration={getRouteDuration(
+                    destination.route,
+                    destination.transport,
+                    "retraction",
+                  )}
                   casingOpacity={0.45}
                   routeOpacity={0.4}
                   reverse
@@ -224,14 +285,35 @@ function Map() {
               ),
             )}
 
-          {valenciaSelected && (
+          {(valenciaSelected ||
+            valenciaStayConfirmed) && (
             <AnimatedRoute
               route={valencia.route}
-              duration={selectionDuration}
+              duration={valenciaSelectionDuration}
               casingOpacity={0.95}
               routeOpacity={0.98}
               onComplete={
-                finishSelectionAnimation
+                finishValenciaSelection
+              }
+            />
+          )}
+
+          {valenciaStayConfirmed && (
+            <PreviewRoute
+              destination={alicante}
+              onComplete={showDestination}
+            />
+          )}
+
+          {(alicanteSelected ||
+            alicanteStayConfirmed) && (
+            <AnimatedRoute
+              route={alicante.route}
+              duration={alicanteSelectionDuration}
+              casingOpacity={0.95}
+              routeOpacity={0.98}
+              onComplete={
+                finishAlicanteSelection
               }
             />
           )}
@@ -240,16 +322,24 @@ function Map() {
         {valenciaSelected && (
           <RouteCamera
             route={valencia.route}
-            duration={selectionDuration}
+            duration={valenciaSelectionDuration}
+          />
+        )}
+
+        {alicanteSelected && (
+          <RouteCamera
+            route={alicante.route}
+            duration={alicanteSelectionDuration}
           />
         )}
 
         <Marker
           position={barcelonaPosition}
           icon={
-            valenciaSelected
-              ? barcelonaDotIcon
-              : barcelonaIcon
+            inBarcelonaPhase &&
+            !valenciaSelected
+              ? barcelonaIcon
+              : barcelonaDotIcon
           }
           interactive={false}
         />
@@ -262,15 +352,41 @@ function Map() {
             name={valencia.name}
             price={valencia.price}
             selected={valenciaSelected}
-            arrived={valenciaArrived}
+            arrived={
+              valenciaArrived ||
+              valenciaStayConfirmed
+            }
             stayDays={valenciaStayDays}
             labelPosition="below"
-            onSelect={selectValencia}
+            onSelect={() =>
+              selectDestination(valencia.id)
+            }
           />
         )}
 
-        {!valenciaSelected &&
-          previewDestinations.map(
+        {visibleDestinationIds.includes(
+          alicante.id,
+        ) && (
+          <DestinationMarker
+            position={alicante.position}
+            name={alicante.name}
+            price={alicante.price}
+            selected={alicanteSelected}
+            arrived={
+              alicanteArrived ||
+              alicanteStayConfirmed
+            }
+            stayDays={alicanteStayDays}
+            labelPosition="right"
+            onSelect={() =>
+              selectDestination(alicante.id)
+            }
+          />
+        )}
+
+        {inBarcelonaPhase &&
+          !valenciaSelected &&
+          barcelonaPreviewDestinations.map(
             (destination) =>
               visibleDestinationIds.includes(
                 destination.id,
@@ -308,7 +424,28 @@ function Map() {
           >
             <StayLengthCard
               cityName={valencia.name}
-              onConfirm={confirmValenciaStay}
+              onConfirm={(days) =>
+                confirmStay(valencia, days)
+              }
+            />
+          </div>
+        )}
+
+      {alicanteArrived &&
+        !alicanteStayConfirmed && (
+          <div
+            style={{
+              position: "absolute",
+              top: "24px",
+              right: "24px",
+              zIndex: 1000,
+            }}
+          >
+            <StayLengthCard
+              cityName={alicante.name}
+              onConfirm={(days) =>
+                confirmStay(alicante, days)
+              }
             />
           </div>
         )}

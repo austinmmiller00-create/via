@@ -1,4 +1,5 @@
 import {
+  alicantePosition,
   barcelonaToMadridRoute,
   barcelonaToMontpellierRoute,
   barcelonaToPalmaRoute,
@@ -8,6 +9,7 @@ import {
   montpellierPosition,
   palmaPosition,
   valenciaPosition,
+  valenciaToAlicanteRoute,
   zaragozaPosition,
 } from "./routeData";
 
@@ -68,5 +70,17 @@ export const barcelonaDestinations: Destination[] = [
     route: barcelonaToPalmaRoute,
     active: false,
     transport: "plane",
+  },
+];
+
+export const valenciaDestinations: Destination[] = [
+  {
+    id: "alicante",
+    name: "Alicante",
+    price: "€18",
+    position: alicantePosition,
+    route: valenciaToAlicanteRoute,
+    active: true,
+    transport: "train",
   },
 ];
