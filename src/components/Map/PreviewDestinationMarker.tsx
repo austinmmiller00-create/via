@@ -11,26 +11,42 @@ import {
   Marker,
 } from "react-leaflet";
 
+import { mapStyle } from "./mapStyle";
 import type { RoutePoint } from "./routeData";
 import useFadeIn from "./useFadeIn";
+
+type LabelPosition =
+  | "above"
+  | "below"
+  | "left"
+  | "right";
 
 type PreviewDestinationMarkerProps = {
   position: RoutePoint;
   name: string;
   price: string;
+  labelPosition?: LabelPosition;
 };
 
 function PreviewDestinationMarker({
   position,
   name,
   price,
+  labelPosition = "right",
 }: PreviewDestinationMarkerProps) {
-  const [radius, setRadius] = useState(40);
+  const destinationStyle = mapStyle.destination;
+
+  const [radius, setRadius] = useState(
+    destinationStyle.radius,
+  );
+
   const [hovered, setHovered] = useState(false);
 
   const fadeOpacity = useFadeIn(700);
 
-  const radiusRef = useRef(40);
+  const radiusRef = useRef(
+    destinationStyle.radius,
+  );
 
   const animationFrameRef =
     useRef<number | null>(null);
@@ -78,8 +94,17 @@ function PreviewDestinationMarker({
   );
 
   useEffect(() => {
-    animateRadius(hovered ? 46 : 40, 180);
-  }, [animateRadius, hovered]);
+    animateRadius(
+      hovered
+        ? destinationStyle.hoverRadius
+        : destinationStyle.radius,
+      180,
+    );
+  }, [
+    animateRadius,
+    destinationStyle,
+    hovered,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -91,7 +116,9 @@ function PreviewDestinationMarker({
     };
   }, []);
 
-  const priceFontSize = 30 * (radius / 40);
+  const priceFontSize =
+    destinationStyle.priceSize *
+    (radius / destinationStyle.radius);
 
   const priceIcon = useMemo(
     () =>
@@ -99,8 +126,8 @@ function PreviewDestinationMarker({
         className: "",
         html: `
           <div style="
-            width: 96px;
-            height: 96px;
+            width: 90px;
+            height: 90px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -109,60 +136,87 @@ function PreviewDestinationMarker({
             font-family: Manrope, sans-serif;
             font-size: ${priceFontSize}px;
             font-weight: 800;
-            letter-spacing: -1.5px;
+            letter-spacing: -1px;
             line-height: 1;
             color: #24324A;
 
             text-shadow:
               0 2px 0 rgba(255,255,255,1),
-              0 3px 8px rgba(36,50,74,0.18);
+              0 3px 7px rgba(36,50,74,0.16);
           ">
             ${price}
           </div>
         `,
-        iconSize: [96, 96],
-        iconAnchor: [48, 48],
+        iconSize: [90, 90],
+        iconAnchor: [45, 45],
       }),
     [price, priceFontSize],
   );
 
-  const labelIcon = useMemo(
-    () =>
-      L.divIcon({
-        className: "",
-        html: `
-          <div style="
-            width: 220px;
-            text-align: center;
-            pointer-events: none;
-            white-space: nowrap;
+  const labelIcon = useMemo(() => {
+    const configurations = {
+      above: {
+        anchor: [100, 76] as [number, number],
+        textAlign: "center",
+      },
+      below: {
+        anchor: [100, -42] as [number, number],
+        textAlign: "center",
+      },
+      left: {
+        anchor: [242, 24] as [number, number],
+        textAlign: "right",
+      },
+      right: {
+        anchor: [-42, 24] as [number, number],
+        textAlign: "left",
+      },
+    };
 
-            font-family: Manrope, sans-serif;
-            font-size: 42px;
-            font-weight: 800;
-            letter-spacing: -2px;
-            line-height: 1;
-            color: #24324A;
+    const configuration =
+      configurations[labelPosition];
 
-            text-shadow:
-              0 2px 0 white,
-              0 0 10px white,
-              0 4px 10px rgba(36,50,74,0.2);
-          ">
-            ${name}
-          </div>
-        `,
-        iconSize: [220, 60],
-        iconAnchor: [110, 92],
-      }),
-    [name],
-  );
+    return L.divIcon({
+      className: "",
+      html: `
+        <div style="
+          width: 200px;
+          text-align: ${configuration.textAlign};
+          pointer-events: none;
+          white-space: nowrap;
+
+          font-family: Manrope, sans-serif;
+          font-size: ${destinationStyle.labelSize}px;
+          font-weight: 800;
+          letter-spacing: -1.5px;
+          line-height: 1;
+          color: #24324A;
+
+          text-shadow:
+            0 2px 0 white,
+            0 0 8px white,
+            0 3px 8px rgba(36,50,74,0.18);
+        ">
+          ${name}
+        </div>
+      `,
+      iconSize: [200, 48],
+      iconAnchor: configuration.anchor,
+    });
+  }, [
+    destinationStyle.labelSize,
+    labelPosition,
+    name,
+  ]);
 
   return (
     <>
       <CircleMarker
         center={position}
-        radius={radius + 7}
+        radius={
+          radius +
+          destinationStyle.outerBorderWidth
+        }
         pathOptions={{
           color: "#FFFFFF",
           fillColor: "#FFFFFF",
@@ -181,7 +235,7 @@ function PreviewDestinationMarker({
           fillColor: "#FFFFFF",
           opacity: fadeOpacity,
           fillOpacity: fadeOpacity,
-          weight: 6,
+          weight: destinationStyle.borderWidth,
         }}
         eventHandlers={{
           mouseover: () => setHovered(true),

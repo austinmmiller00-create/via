@@ -1,3 +1,5 @@
+import { mapStyle } from "./mapStyle";
+
 import {
   useEffect,
   useMemo,
@@ -213,7 +215,7 @@ function AnimatedRoute({
         positions={visibleRoute}
         pathOptions={{
           color: "#FFFFFF",
-          weight: 26,
+          weight: mapStyle.route.casingWidth,
           opacity: casingOpacity,
           lineCap: "round",
           lineJoin: "round",
@@ -225,7 +227,7 @@ function AnimatedRoute({
         positions={visibleRoute}
         pathOptions={{
           color: "#E76F51",
-          weight: 16,
+          weight: mapStyle.route.lineWidth,
           opacity: routeOpacity,
           lineCap: "round",
           lineJoin: "round",

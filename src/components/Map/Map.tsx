@@ -29,7 +29,7 @@ import { barcelonaPosition } from "./routeData";
 
 const previewDuration = 4000;
 const selectionDuration = 3000;
-const retractionDuration = 1800;
+const retractionDuration = 1200;
 
 const valencia = barcelonaDestinations.find(
   (destination) => destination.id === "valencia",
@@ -122,16 +122,21 @@ function Map() {
         name="route-lines"
         style={{ zIndex: 350 }}
       >
+        <PreviewRoute
+            destination={valencia}
+            onComplete={showDestination}
+        />
+
         {!valenciaSelected &&
-          barcelonaDestinations.map(
-            (destination) => (
-              <PreviewRoute
-                key={destination.id}
-                destination={destination}
-                onComplete={showDestination}
-              />
-            ),
-          )}
+            previewDestinations.map(
+                (destination) => (
+                <PreviewRoute
+                    key={destination.id}
+                    destination={destination}
+                    onComplete={showDestination}
+                />
+                ),
+            )}
 
         {valenciaSelected &&
           previewDestinations.map(
@@ -187,6 +192,7 @@ function Map() {
           selected={valenciaSelected}
           arrived={valenciaArrived}
           onSelect={selectValencia}
+          labelPosition="below"
         />
       )}
 
@@ -197,11 +203,20 @@ function Map() {
               destination.id,
             ) && (
               <PreviewDestinationMarker
-                key={destination.id}
-                position={destination.position}
-                name={destination.name}
-                price={destination.price}
-              />
+                    key={destination.id}
+                    position={destination.position}
+                    name={destination.name}
+                    price={destination.price}
+                    labelPosition={
+                        destination.id === "palma"
+                        ? "below"
+                        : destination.id === "zaragoza"
+                            ? "above"
+                            : destination.id === "madrid"
+                            ? "left"
+                            : "right"
+                    }
+                    />
             ),
         )}
     </MapContainer>
