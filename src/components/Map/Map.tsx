@@ -3,6 +3,7 @@ import {
   useMemo,
   useState,
 } from "react";
+
 import {
   MapContainer,
   Marker,
@@ -17,16 +18,19 @@ import "leaflet/dist/leaflet.css";
 
 import AnimatedRoute from "./AnimatedRoute";
 import DestinationMarker from "./DestinationMarker";
-import PreviewDestinationMarker from "./PreviewDestinationMarker";
 import RouteCamera from "./RouteCamera";
 import StayLengthCard from "./StayLengthCard";
 
-import type { Destination } from "./destinationData";
+import {
+  getCityById,
+  type RoutePoint,
+} from "./cityDatabase";
 
 import {
-  getCityDestinations,
-  getDestinationFromCity,
-} from "./journeyData";
+  getGeneratedDestination,
+  getGeneratedDestinations,
+  type GeneratedDestination,
+} from "./generatedDestinations";
 
 import {
   barcelonaDotIcon,
@@ -35,7 +39,6 @@ import {
 
 import { mapStyle } from "./mapStyle";
 import { getRouteDuration } from "./routeAnimation";
-import { barcelonaPosition } from "./routeData";
 import type { TripState } from "./tripTypes";
 
 type LabelPosition =
@@ -46,12 +49,14 @@ type LabelPosition =
 
 type CompletedLeg = {
   originId: string;
-  destination: Destination;
+  destination: GeneratedDestination;
   days: number;
 };
 
+const startingCityId = "barcelona";
+
 const initialTripState: TripState = {
-  currentCityId: "barcelona",
+  currentCityId: startingCityId,
   selectedDestinationId: null,
   arrivedDestinationId: null,
   stops: [],
@@ -65,38 +70,40 @@ function getRevealId(
 }
 
 function getLabelPosition(
-  originId: string,
-  destinationId: string,
+  originCityId: string,
+  destinationPosition: RoutePoint,
 ): LabelPosition {
-  if (originId === "barcelona") {
-    if (
-      destinationId === "valencia" ||
-      destinationId === "palma"
-    ) {
-      return "below";
-    }
+  const originCity = getCityById(originCityId);
 
-    if (destinationId === "zaragoza") {
-      return "above";
-    }
-
-    if (destinationId === "madrid") {
-      return "left";
-    }
+  if (!originCity) {
+    return "right";
   }
 
-  if (
-    originId === "valencia" &&
-    destinationId === "madrid"
-  ) {
-    return "left";
+  const latitudeDifference =
+    destinationPosition[0] -
+    originCity.position[0];
+
+  const longitudeDifference =
+    destinationPosition[1] -
+    originCity.position[1];
+
+  const movesMoreHorizontally =
+    Math.abs(longitudeDifference) >=
+    Math.abs(latitudeDifference);
+
+  if (movesMoreHorizontally) {
+    return longitudeDifference >= 0
+      ? "right"
+      : "left";
   }
 
-  return "right";
+  return latitudeDifference >= 0
+    ? "above"
+    : "below";
 }
 
 type PreviewRouteProps = {
-  destination: Destination;
+  destination: GeneratedDestination;
   revealId: string;
   onComplete: (revealId: string) => void;
 };
@@ -128,7 +135,7 @@ function PreviewRoute({
 }
 
 type SelectedRouteProps = {
-  destination: Destination;
+  destination: GeneratedDestination;
   onComplete: (destinationId: string) => void;
 };
 
@@ -158,7 +165,7 @@ function SelectedRoute({
 }
 
 type StaticRouteProps = {
-  destination: Destination;
+  destination: GeneratedDestination;
 };
 
 function StaticRoute({
@@ -205,8 +212,25 @@ function Map() {
   const currentOriginId =
     tripState.currentCityId;
 
-  const currentDestinations =
-    getCityDestinations(currentOriginId);
+  const visitedCityIds = useMemo(
+    () => [
+      startingCityId,
+      ...tripState.stops.map(
+        (stop) => stop.cityId,
+      ),
+    ],
+    [tripState.stops],
+  );
+
+  const currentDestinations = useMemo(
+    () =>
+      getGeneratedDestinations(
+        currentOriginId,
+        undefined,
+        visitedCityIds,
+      ),
+    [currentOriginId, visitedCityIds],
+  );
 
   const selectedDestination =
     currentDestinations.find(
@@ -232,11 +256,12 @@ function Map() {
   const completedLegs =
     useMemo<CompletedLeg[]>(() => {
       const legs: CompletedLeg[] = [];
-      let originId = "barcelona";
+
+      let originId = startingCityId;
 
       for (const stop of tripState.stops) {
         const destination =
-          getDestinationFromCity(
+          getGeneratedDestination(
             originId,
             stop.cityId,
           );
@@ -272,7 +297,8 @@ function Map() {
     (destinationId: string) => {
       setTripState((currentState) => ({
         ...currentState,
-        selectedDestinationId: destinationId,
+        selectedDestinationId:
+          destinationId,
         arrivedDestinationId: null,
       }));
     },
@@ -280,16 +306,20 @@ function Map() {
   );
 
   const finishDestinationSelection =
-    useCallback((destinationId: string) => {
-      setTripState((currentState) => ({
-        ...currentState,
-        arrivedDestinationId: destinationId,
-      }));
-    }, []);
+    useCallback(
+      (destinationId: string) => {
+        setTripState((currentState) => ({
+          ...currentState,
+          arrivedDestinationId:
+            destinationId,
+        }));
+      },
+      [],
+    );
 
   const confirmStay = useCallback(
     (
-      destination: Destination,
+      destination: GeneratedDestination,
       days: number,
     ) => {
       setTripState((currentState) => ({
@@ -310,7 +340,7 @@ function Map() {
   );
 
   const showBarcelonaLabel =
-    currentOriginId === "barcelona" &&
+    currentOriginId === startingCityId &&
     selectedDestination === undefined;
 
   return (
@@ -354,17 +384,18 @@ function Map() {
 
           {currentDestinations.map(
             (destination) => {
-              const isSelected =
-                selectedDestination?.id ===
-                destination.id;
-
               const revealId = getRevealId(
                 currentOriginId,
                 destination.id,
               );
 
+              const isSelected =
+                selectedDestination?.id ===
+                destination.id;
+
               if (
-                selectedDestination === undefined ||
+                selectedDestination ===
+                  undefined ||
                 isSelected
               ) {
                 return (
@@ -372,7 +403,9 @@ function Map() {
                     key={`preview-${revealId}`}
                     destination={destination}
                     revealId={revealId}
-                    onComplete={showDestination}
+                    onComplete={
+                      showDestination
+                    }
                   />
                 );
               }
@@ -397,7 +430,9 @@ function Map() {
           {selectedDestination && (
             <SelectedRoute
               key={`selected-${currentOriginId}-${selectedDestination.id}`}
-              destination={selectedDestination}
+              destination={
+                selectedDestination
+              }
               onComplete={
                 finishDestinationSelection
               }
@@ -408,13 +443,18 @@ function Map() {
         {selectedDestination &&
           !selectedArrived && (
             <RouteCamera
-              route={selectedDestination.route}
+              route={
+                selectedDestination.route
+              }
               duration={selectedDuration}
             />
           )}
 
         <Marker
-          position={barcelonaPosition}
+          position={
+            getCityById(startingCityId)
+              ?.position ?? [41.38879, 2.15899]
+          }
           icon={
             showBarcelonaLabel
               ? barcelonaIcon
@@ -431,7 +471,8 @@ function Map() {
 
             const showLabel =
               isCurrentCity &&
-              selectedDestination === undefined;
+              selectedDestination ===
+                undefined;
 
             return (
               <DestinationMarker
@@ -447,7 +488,7 @@ function Map() {
                 showLabel={showLabel}
                 labelPosition={getLabelPosition(
                   leg.originId,
-                  leg.destination.id,
+                  leg.destination.position,
                 )}
                 onSelect={() => {}}
               />
@@ -463,7 +504,9 @@ function Map() {
             );
 
             const isVisible =
-              visibleRouteIds.includes(revealId);
+              visibleRouteIds.includes(
+                revealId,
+              );
 
             const isSelected =
               selectedDestination?.id ===
@@ -480,25 +523,12 @@ function Map() {
               return null;
             }
 
-            if (!destination.active) {
-              return (
-                <PreviewDestinationMarker
-                  key={`preview-marker-${revealId}`}
-                  position={destination.position}
-                  name={destination.name}
-                  price={destination.price}
-                  labelPosition={getLabelPosition(
-                    currentOriginId,
-                    destination.id,
-                  )}
-                />
-              );
-            }
-
             return (
               <DestinationMarker
-                key={`active-marker-${revealId}`}
-                position={destination.position}
+                key={`destination-marker-${revealId}`}
+                position={
+                  destination.position
+                }
                 name={destination.name}
                 price={destination.price}
                 selected={isSelected}
@@ -509,7 +539,7 @@ function Map() {
                 showLabel
                 labelPosition={getLabelPosition(
                   currentOriginId,
-                  destination.id,
+                  destination.position,
                 )}
                 onSelect={() =>
                   selectDestination(
