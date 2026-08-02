@@ -54,6 +54,7 @@ export function getDistanceKm(
 export function getClosestCities(
   originCityId: string,
   count = recommendationConfig.recommendationCount,
+  excludedCityIds: readonly string[] = [],
 ): RecommendedCity[] {
   const originCity = getCityById(originCityId);
 
@@ -61,11 +62,16 @@ export function getClosestCities(
     return [];
   }
 
+  const excludedCities = new Set([
+    originCity.id,
+    ...excludedCityIds,
+  ]);
+
   const possibleCities = cities
     .filter(
       (city) =>
         city.enabled &&
-        city.id !== originCity.id,
+        !excludedCities.has(city.id),
     )
     .map((city) => ({
       city,

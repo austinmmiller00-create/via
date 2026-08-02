@@ -7,6 +7,7 @@ import {
 
 import {
   getClosestCities,
+  getDistanceKm,
 } from "./cityRecommendations";
 
 import { generateRoute } from "./routeGenerator";
@@ -36,8 +37,7 @@ function findConnectionOverride(
 
       const matchesForward =
         connection.fromCityId === originCityId &&
-        connection.toCityId ===
-          destinationCityId;
+        connection.toCityId === destinationCityId;
 
       const matchesReverse =
         connection.bidirectional &&
@@ -102,54 +102,83 @@ function estimatePrice(
   );
 }
 
+export function getGeneratedDestination(
+  originCityId: string,
+  destinationCityId: string,
+): GeneratedDestination | undefined {
+  const originCity = getCityById(originCityId);
+
+  const destinationCity = getCityById(
+    destinationCityId,
+  );
+
+  if (!originCity || !destinationCity) {
+    return undefined;
+  }
+
+  const distanceKm = getDistanceKm(
+    originCity.position,
+    destinationCity.position,
+  );
+
+  const connectionOverride =
+    findConnectionOverride(
+      originCityId,
+      destinationCityId,
+    );
+
+  const transport =
+    connectionOverride?.transport ??
+    chooseAutomaticTransport(
+      originCity.countryCode,
+      destinationCity.countryCode,
+      distanceKm,
+    );
+
+  const estimatedPriceEur =
+    connectionOverride?.estimatedPriceEur ??
+    estimatePrice(distanceKm, transport);
+
+  return {
+    id: destinationCity.id,
+    name: destinationCity.name,
+    country: destinationCity.country,
+    price: `€${estimatedPriceEur}`,
+    estimatedPriceEur,
+    distanceKm: Math.round(distanceKm),
+    position: destinationCity.position,
+    route: generateRoute({
+      originId: originCity.id,
+      destinationId: destinationCity.id,
+      start: originCity.position,
+      end: destinationCity.position,
+      transport,
+    }),
+    transport,
+    active: true,
+  };
+}
+
 export function getGeneratedDestinations(
   originCityId: string,
   count?: number,
+  excludedCityIds: readonly string[] = [],
 ): GeneratedDestination[] {
-  const originCity = getCityById(originCityId);
-
-  if (!originCity) {
-    return [];
-  }
-
-  return getClosestCities(originCityId, count).map(
-    ({ city, distanceKm }) => {
-      const connectionOverride =
-        findConnectionOverride(
-          originCityId,
-          city.id,
-        );
-
-      const transport =
-        connectionOverride?.transport ??
-        chooseAutomaticTransport(
-          originCity.countryCode,
-          city.countryCode,
-          distanceKm,
-        );
-
-      const estimatedPriceEur =
-        connectionOverride?.estimatedPriceEur ??
-        estimatePrice(distanceKm, transport);
-
-      return {
-        id: city.id,
-        name: city.name,
-        country: city.country,
-        price: `€${estimatedPriceEur}`,
-        estimatedPriceEur,
-        distanceKm: Math.round(distanceKm),
-        position: city.position,
-        route: generateRoute({
-          originId: originCity.id,
-          destinationId: city.id,
-          start: originCity.position,
-          end: city.position,
-          transport,
-        }),
-        transport,
-        active: true,
-      };
-    },
-  );
+  return getClosestCities(
+    originCityId,
+    count,
+    excludedCityIds,
+  )
+    .map(({ city }) =>
+      getGeneratedDestination(
+        originCityId,
+        city.id,
+      ),
+    )
+    .filter(
+      (
+        destination,
+      ): destination is GeneratedDestination =>
+        destination !== undefined,
+    );
 }
