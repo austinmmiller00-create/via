@@ -90,7 +90,7 @@ export const valenciaDestinations: Destination[] = [
     price: "€32",
     position: madridPosition,
     route: valenciaToMadridRoute,
-    active: false,
+    active: true,
     transport: "train",
   },
 ];
