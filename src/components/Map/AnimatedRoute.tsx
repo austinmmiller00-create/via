@@ -5,7 +5,9 @@ import type { RoutePoint } from "./routeData";
 type AnimatedRouteProps = {
   route: RoutePoint[];
   duration?: number;
-  onComplete: () => void;
+  casingOpacity?: number;
+  routeOpacity?: number;
+  onComplete?: () => void;
 };
 
 type RouteSegment = {
@@ -57,14 +59,13 @@ function getPartialRoute(
         ? 0
         : distanceIntoSegment / segment.length;
 
-    const interpolatedPoint: RoutePoint = [
+    visibleRoute.push([
       segment.start[0] +
         (segment.end[0] - segment.start[0]) * segmentProgress,
       segment.start[1] +
         (segment.end[1] - segment.start[1]) * segmentProgress,
-    ];
+    ]);
 
-    visibleRoute.push(interpolatedPoint);
     break;
   }
 
@@ -74,6 +75,8 @@ function getPartialRoute(
 function AnimatedRoute({
   route,
   duration = 4000,
+  casingOpacity = 0.9,
+  routeOpacity = 0.95,
   onComplete,
 }: AnimatedRouteProps) {
   const [progress, setProgress] = useState(0);
@@ -127,7 +130,7 @@ function AnimatedRoute({
 
       if (!hasCompleted.current) {
         hasCompleted.current = true;
-        onComplete();
+        onComplete?.();
       }
     };
 
@@ -156,9 +159,10 @@ function AnimatedRoute({
         pathOptions={{
           color: "#ffffff",
           weight: 34,
-          opacity: 0.9,
+          opacity: casingOpacity,
           lineCap: "round",
           lineJoin: "round",
+          interactive: false,
         }}
       />
 
@@ -167,9 +171,10 @@ function AnimatedRoute({
         pathOptions={{
           color: "#E76F51",
           weight: 24,
-          opacity: 0.95,
+          opacity: routeOpacity,
           lineCap: "round",
           lineJoin: "round",
+          interactive: false,
         }}
       />
     </>

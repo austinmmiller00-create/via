@@ -1,11 +1,13 @@
 import { useCallback, useState } from "react";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
+
 import "@fontsource/manrope/700.css";
 import "@fontsource/manrope/800.css";
 import "leaflet/dist/leaflet.css";
 
 import AnimatedRoute from "./AnimatedRoute";
-import { barcelonaIcon, valenciaIcon } from "./mapIcons";
+import DestinationMarker from "./DestinationMarker";
+import { barcelonaIcon } from "./mapIcons";
 import {
   barcelonaPosition,
   barcelonaToValenciaRoute,
@@ -14,9 +16,15 @@ import {
 
 function Map() {
   const [showValencia, setShowValencia] = useState(false);
+  const [valenciaSelected, setValenciaSelected] =
+    useState(false);
 
-  const finishRouteAnimation = useCallback(() => {
+  const finishPreviewAnimation = useCallback(() => {
     setShowValencia(true);
+  }, []);
+
+  const selectValencia = useCallback(() => {
+    setValenciaSelected(true);
   }, []);
 
   return (
@@ -38,8 +46,19 @@ function Map() {
       <AnimatedRoute
         route={barcelonaToValenciaRoute}
         duration={4000}
-        onComplete={finishRouteAnimation}
+        casingOpacity={0.45}
+        routeOpacity={0.4}
+        onComplete={finishPreviewAnimation}
       />
+
+      {valenciaSelected && (
+        <AnimatedRoute
+          route={barcelonaToValenciaRoute}
+          duration={850}
+          casingOpacity={0.95}
+          routeOpacity={0.98}
+        />
+      )}
 
       <Marker
         position={barcelonaPosition}
@@ -48,10 +67,12 @@ function Map() {
       />
 
       {showValencia && (
-        <Marker
+        <DestinationMarker
           position={valenciaPosition}
-          icon={valenciaIcon}
-          interactive={false}
+          name="Valencia"
+          price="€25"
+          selected={valenciaSelected}
+          onSelect={selectValencia}
         />
       )}
     </MapContainer>
