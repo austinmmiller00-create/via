@@ -1,8 +1,10 @@
 import {
   cities,
   getCityById,
+  getPopulationBand,
   recommendationConfig,
   type City,
+  type PopulationBand,
   type RoutePoint,
 } from "./cityDatabase";
 
@@ -15,7 +17,8 @@ export type RecommendedCity = {
 
 type ScoredCandidate = RecommendedCity & {
   bearing: number;
-  distanceBand: "near" | "medium" | "far";
+  populationBand: PopulationBand;
+  targetDifferenceKm: number;
 };
 
 function degreesToRadians(value: number) {
@@ -115,47 +118,6 @@ function getAngleDifference(
     : difference;
 }
 
-function getDistanceBand(
-  distanceKm: number,
-): ScoredCandidate["distanceBand"] {
-  if (distanceKm < 180) {
-    return "near";
-  }
-
-  if (distanceKm < 420) {
-    return "medium";
-  }
-
-  return "far";
-}
-
-function getDistanceScore(distanceKm: number) {
-  /*
-    Avoids always preferring the absolute closest city.
-
-    Useful medium-distance stops score highest, while
-    nearby and adventurous options remain competitive.
-  */
-
-  if (distanceKm <= 120) {
-    return 22 + distanceKm / 40;
-  }
-
-  if (distanceKm <= 320) {
-    return 34 - Math.abs(distanceKm - 240) * 0.04;
-  }
-
-  if (distanceKm <= 650) {
-    return 27 - (distanceKm - 320) * 0.025;
-  }
-
-  return clamp(
-    18 - (distanceKm - 650) * 0.012,
-    4,
-    18,
-  );
-}
-
 function getDirectionScore(
   differenceDegrees?: number,
 ) {
@@ -164,7 +126,8 @@ function getDirectionScore(
   }
 
   if (differenceDegrees <= 35) {
-    return 22;
+    return recommendationConfig
+      .forwardDirectionBonus;
   }
 
   if (differenceDegrees <= 75) {
@@ -179,7 +142,24 @@ function getDirectionScore(
     return -14;
   }
 
-  return -32;
+  return recommendationConfig
+    .strongBacktrackingPenalty;
+}
+
+function getTargetDistanceScore(
+  targetDifferenceKm: number,
+  toleranceKm: number,
+) {
+  const closeness =
+    1 -
+    targetDifferenceKm /
+      Math.max(toleranceKm, 1);
+
+  return clamp(
+    8 + closeness * 38,
+    4,
+    46,
+  );
 }
 
 function getDiversityAdjustment(
@@ -198,11 +178,6 @@ function getDiversityAdjustment(
       selected.bearing,
     );
 
-    /*
-      Penalise options that head in almost exactly
-      the same direction.
-    */
-
     if (bearingDifference < 18) {
       adjustment -= 16;
     } else if (bearingDifference < 35) {
@@ -210,11 +185,6 @@ function getDiversityAdjustment(
     } else if (bearingDifference < 55) {
       adjustment -= 4;
     }
-
-    /*
-      Penalise destination cities that are clustered
-      closely together.
-    */
 
     const citySeparationKm = getDistanceKm(
       candidate.city.position,
@@ -235,17 +205,30 @@ function getDiversityAdjustment(
         candidate.city.countryCode,
     );
 
-  adjustment += countryAlreadySelected ? -2 : 5;
+  if (countryAlreadySelected) {
+    adjustment -= 2;
+  } else {
+    adjustment +=
+      recommendationConfig
+        .countryDiversityBonus;
+  }
 
-  const distanceBandAlreadySelected =
+  const populationBandAlreadySelected =
     selectedCandidates.some(
       (selected) =>
-        selected.distanceBand ===
-        candidate.distanceBand,
+        selected.populationBand ===
+        candidate.populationBand,
     );
 
-  adjustment +=
-    distanceBandAlreadySelected ? -2 : 5;
+  if (populationBandAlreadySelected) {
+    adjustment -=
+      recommendationConfig
+        .samePopulationBandPenalty;
+  } else {
+    adjustment +=
+      recommendationConfig
+        .newPopulationBandBonus;
+  }
 
   return adjustment;
 }
@@ -255,12 +238,19 @@ export function getRecommendedCities(
   count = recommendationConfig.recommendationCount,
   excludedCityIds: readonly string[] = [],
   previousCityId?: string,
+  targetDistanceKm = 350,
 ): RecommendedCity[] {
   const originCity = getCityById(originCityId);
 
   if (!originCity) {
     return [];
   }
+
+  const safeTargetDistanceKm = clamp(
+    targetDistanceKm,
+    80,
+    1800,
+  );
 
   const previousCity = previousCityId
     ? getCityById(previousCityId)
@@ -278,107 +268,122 @@ export function getRecommendedCities(
     ...excludedCityIds,
   ]);
 
-  const allCandidates: ScoredCandidate[] =
-    cities
-      .filter(
-        (city) =>
-          city.enabled &&
-          !excludedCities.has(city.id),
-      )
-      .map((city) => {
-        const distanceKm = getDistanceKm(
-          originCity.position,
-          city.position,
-        );
-
-        const bearing = getBearingDegrees(
-          originCity.position,
-          city.position,
-        );
-
-        const directionDifferenceDegrees =
-          previousJourneyBearing === undefined
-            ? undefined
-            : getAngleDifference(
-                previousJourneyBearing,
-                bearing,
-              );
-
-        const importanceScore =
-          city.importance * 12;
-
-        const distanceScore =
-          getDistanceScore(distanceKm);
-
-        const directionScore =
-          getDirectionScore(
-            directionDifferenceDegrees,
-          );
-
-        return {
-          city,
-          distanceKm,
-          bearing,
-          distanceBand:
-            getDistanceBand(distanceKm),
-          directionDifferenceDegrees,
-          score:
-            importanceScore +
-            distanceScore +
-            directionScore,
-        };
-      })
-      .filter(
-        ({ distanceKm }) =>
-          distanceKm >=
-          recommendationConfig.minimumDistanceKm,
+  const allCandidates = cities
+    .filter(
+      (city) =>
+        city.enabled &&
+        !excludedCities.has(city.id),
+    )
+    .map((city) => {
+      const distanceKm = getDistanceKm(
+        originCity.position,
+        city.position,
       );
 
-  /*
-    Build a wider candidate pool rather than simply
-    using the nearest five.
-  */
+      const bearing = getBearingDegrees(
+        originCity.position,
+        city.position,
+      );
 
-  const nearestCandidates = [...allCandidates]
-    .sort(
-      (first, second) =>
-        first.distanceKm - second.distanceKm,
-    )
-    .slice(0, 24);
+      const directionDifferenceDegrees =
+        previousJourneyBearing === undefined
+          ? undefined
+          : getAngleDifference(
+              previousJourneyBearing,
+              bearing,
+            );
 
-  const qualityCandidates = [...allCandidates]
+      return {
+        city,
+        distanceKm,
+        bearing,
+        populationBand:
+          getPopulationBand(city.population),
+        targetDifferenceKm: Math.abs(
+          distanceKm - safeTargetDistanceKm,
+        ),
+        directionDifferenceDegrees,
+      };
+    })
     .filter(
       ({ distanceKm }) =>
-        distanceKm <=
-        recommendationConfig.maximumDistanceKm *
-          2.5,
+        distanceKm >=
+        recommendationConfig.minimumDistanceKm,
     )
     .sort(
       (first, second) =>
-        second.city.importance -
-          first.city.importance ||
-        first.distanceKm - second.distanceKm,
-    )
-    .slice(0, 14);
-
-  const candidateMap = new Map<
-    string,
-    ScoredCandidate
-  >();
-
-  for (const candidate of [
-    ...nearestCandidates,
-    ...qualityCandidates,
-  ]) {
-    candidateMap.set(
-      candidate.city.id,
-      candidate,
+        first.targetDifferenceKm -
+        second.targetDifferenceKm,
     );
+
+  const desiredPoolSize = Math.min(
+    Math.max(count * 3, 15),
+    recommendationConfig.candidatePoolSize,
+    allCandidates.length,
+  );
+
+  let toleranceKm = clamp(
+    safeTargetDistanceKm * 0.16,
+    60,
+    180,
+  );
+
+  const maximumToleranceKm = Math.max(
+    260,
+    safeTargetDistanceKm * 0.45,
+  );
+
+  let candidatesNearTarget =
+    allCandidates.filter(
+      (candidate) =>
+        candidate.targetDifferenceKm <=
+        toleranceKm,
+    );
+
+  while (
+    candidatesNearTarget.length <
+      desiredPoolSize &&
+    toleranceKm < maximumToleranceKm
+  ) {
+    toleranceKm += Math.max(
+      40,
+      safeTargetDistanceKm * 0.05,
+    );
+
+    candidatesNearTarget =
+      allCandidates.filter(
+        (candidate) =>
+          candidate.targetDifferenceKm <=
+          toleranceKm,
+      );
   }
 
-  const remainingCandidates = [
-    ...candidateMap.values(),
-  ];
+  const candidatePool =
+    candidatesNearTarget.length >= count
+      ? candidatesNearTarget.slice(
+          0,
+          recommendationConfig
+            .candidatePoolSize,
+        )
+      : allCandidates.slice(
+          0,
+          recommendationConfig
+            .candidatePoolSize,
+        );
+
+  const remainingCandidates: ScoredCandidate[] =
+    candidatePool.map((candidate) => ({
+      ...candidate,
+      score:
+        candidate.city.importance * 10 +
+        getTargetDistanceScore(
+          candidate.targetDifferenceKm,
+          toleranceKm,
+        ) +
+        getDirectionScore(
+          candidate.directionDifferenceDegrees,
+        ),
+    }));
 
   const selectedCandidates: ScoredCandidate[] =
     [];
@@ -432,11 +437,6 @@ export function getRecommendedCities(
     }),
   );
 }
-
-/*
-  Kept temporarily so generatedDestinations.ts
-  continues working without changes.
-*/
 
 export const getClosestCities =
   getRecommendedCities;

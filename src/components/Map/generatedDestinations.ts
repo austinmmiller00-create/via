@@ -165,12 +165,14 @@ export function getGeneratedDestinations(
   count?: number,
   excludedCityIds: readonly string[] = [],
   previousCityId?: string,
+  targetDistanceKm = 350,
 ): GeneratedDestination[] {
   return getRecommendedCities(
     originCityId,
     count,
     excludedCityIds,
     previousCityId,
+    targetDistanceKm,
   )
     .map((recommendation) => {
       const destination =

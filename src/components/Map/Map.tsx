@@ -1,8 +1,13 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from "react";
+
+import type {
+  LatLngBoundsExpression,
+} from "leaflet";
 
 import {
   MapContainer,
@@ -10,6 +15,7 @@ import {
   Pane,
   Polyline,
   TileLayer,
+  useMap,
 } from "react-leaflet";
 
 import "@fontsource/manrope/700.css";
@@ -18,6 +24,7 @@ import "leaflet/dist/leaflet.css";
 
 import AnimatedRoute from "./AnimatedRoute";
 import DestinationMarker from "./DestinationMarker";
+import ExploreDistanceSlider from "./ExploreDistanceSlider";
 import RouteCamera from "./RouteCamera";
 import StayLengthCard from "./StayLengthCard";
 
@@ -55,12 +62,71 @@ type CompletedLeg = {
 
 const startingCityId = "barcelona";
 
+const minimumExploreDistanceKm = 100;
+const maximumExploreDistanceKm = 1500;
+
 const initialTripState: TripState = {
   currentCityId: startingCityId,
   selectedDestinationId: null,
   arrivedDestinationId: null,
   stops: [],
 };
+
+function clamp(
+  value: number,
+  minimum: number,
+  maximum: number,
+) {
+  return Math.min(
+    maximum,
+    Math.max(minimum, value),
+  );
+}
+
+function degreesToRadians(value: number) {
+  return value * (Math.PI / 180);
+}
+
+function getExploreBounds(
+  position: RoutePoint,
+  targetDistanceKm: number,
+): LatLngBoundsExpression {
+  /*
+    The extra space accounts for recommendation
+    tolerance, labels and the bottom slider.
+  */
+
+  const visibleRadiusKm = clamp(
+    targetDistanceKm * 1.5 + 100,
+    250,
+    2400,
+  );
+
+  const latitudeRadius =
+    visibleRadiusKm / 111;
+
+  const longitudeScale = Math.max(
+    Math.cos(
+      degreesToRadians(position[0]),
+    ),
+    0.25,
+  );
+
+  const longitudeRadius =
+    visibleRadiusKm /
+    (111 * longitudeScale);
+
+  return [
+    [
+      position[0] - latitudeRadius,
+      position[1] - longitudeRadius,
+    ],
+    [
+      position[0] + latitudeRadius,
+      position[1] + longitudeRadius,
+    ],
+  ];
+}
 
 function getRevealId(
   originId: string,
@@ -100,6 +166,59 @@ function getLabelPosition(
   return latitudeDifference >= 0
     ? "above"
     : "below";
+}
+
+type ExploreZoomControllerProps = {
+  cityId: string;
+  distanceKm: number;
+  enabled: boolean;
+};
+
+function ExploreZoomController({
+  cityId,
+  distanceKm,
+  enabled,
+}: ExploreZoomControllerProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const city = getCityById(cityId);
+
+    if (!city) {
+      return;
+    }
+
+    const bounds = getExploreBounds(
+      city.position,
+      distanceKm,
+    );
+
+    /*
+      Stop the previous flight so the camera smoothly
+      follows the latest slider position.
+    */
+
+    map.stop();
+
+    map.flyToBounds(bounds, {
+      animate: true,
+      duration: 0.8,
+      easeLinearity: 0.15,
+      padding: [80, 125],
+      maxZoom: 8,
+    });
+  }, [
+    cityId,
+    distanceKm,
+    enabled,
+    map,
+  ]);
+
+  return null;
 }
 
 type PreviewRouteProps = {
@@ -209,48 +328,59 @@ function Map() {
   const [tripState, setTripState] =
     useState<TripState>(initialTripState);
 
+  const [
+    sliderDistanceKm,
+    setSliderDistanceKm,
+  ] = useState(350);
+
+  const [
+    targetDistanceKm,
+    setTargetDistanceKm,
+  ] = useState(350);
+
   const currentOriginId =
     tripState.currentCityId;
 
   const visitedCityIds = useMemo(
-  () => [
-    startingCityId,
-    ...tripState.stops.map(
-      (stop) => stop.cityId,
-    ),
-  ],
-  [tripState.stops],
-);
+    () => [
+      startingCityId,
+      ...tripState.stops.map(
+        (stop) => stop.cityId,
+      ),
+    ],
+    [tripState.stops],
+  );
 
-const previousCityId = useMemo(() => {
-  if (tripState.stops.length === 0) {
-    return undefined;
-  }
+  const previousCityId = useMemo(() => {
+    if (tripState.stops.length === 0) {
+      return undefined;
+    }
 
-  if (tripState.stops.length === 1) {
-    return startingCityId;
-  }
+    if (tripState.stops.length === 1) {
+      return startingCityId;
+    }
 
-  return tripState.stops[
-    tripState.stops.length - 2
-  ].cityId;
-}, [tripState.stops]);
+    return tripState.stops[
+      tripState.stops.length - 2
+    ].cityId;
+  }, [tripState.stops]);
 
-const currentDestinations = useMemo(
-  () =>
-    getGeneratedDestinations(
+  const currentDestinations = useMemo(
+    () =>
+      getGeneratedDestinations(
+        currentOriginId,
+        undefined,
+        visitedCityIds,
+        previousCityId,
+        targetDistanceKm,
+      ),
+    [
       currentOriginId,
-      undefined,
-      visitedCityIds,
       previousCityId,
-    ),
-  [
-    currentOriginId,
-    previousCityId,
-    visitedCityIds,
-  ],
-);
-
+      targetDistanceKm,
+      visitedCityIds,
+    ],
+  );
 
   const selectedDestination =
     currentDestinations.find(
@@ -307,7 +437,10 @@ const currentDestinations = useMemo(
           return currentIds;
         }
 
-        return [...currentIds, revealId];
+        return [
+          ...currentIds,
+          revealId,
+        ];
       });
     },
     [],
@@ -373,11 +506,15 @@ const currentDestinations = useMemo(
     >
       <MapContainer
         center={[41.25, 0.1]}
-        zoom={6.7}
-        minZoom={5}
+        zoom={6.2}
+        minZoom={3.5}
         maxZoom={10}
         zoomSnap={0.1}
         zoomDelta={0.2}
+        zoomAnimation
+        fadeAnimation
+        markerZoomAnimation
+        zoomAnimationThreshold={10}
         wheelPxPerZoomLevel={1200}
         style={{
           width: "100%",
@@ -387,6 +524,17 @@ const currentDestinations = useMemo(
         <TileLayer
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
+          updateWhenZooming={false}
+          updateWhenIdle
+          keepBuffer={6}
+        />
+
+        <ExploreZoomController
+          cityId={currentOriginId}
+          distanceKm={sliderDistanceKm}
+          enabled={
+            selectedDestination === undefined
+          }
         />
 
         <Pane
@@ -473,7 +621,8 @@ const currentDestinations = useMemo(
         <Marker
           position={
             getCityById(startingCityId)
-              ?.position ?? [41.38879, 2.15899]
+              ?.position ??
+            [41.38879, 2.15899]
           }
           icon={
             showBarcelonaLabel
@@ -571,6 +720,30 @@ const currentDestinations = useMemo(
           },
         )}
       </MapContainer>
+
+      {selectedDestination === undefined && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: "24px",
+            zIndex: 1000,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <ExploreDistanceSlider
+            value={sliderDistanceKm}
+            minimum={
+              minimumExploreDistanceKm
+            }
+            maximum={
+              maximumExploreDistanceKm
+            }
+            onChange={setSliderDistanceKm}
+            onCommit={setTargetDistanceKm}
+          />
+        </div>
+      )}
 
       {selectedDestination &&
         selectedArrived && (
