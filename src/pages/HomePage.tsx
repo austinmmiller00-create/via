@@ -1,23 +1,14 @@
+import Map from "../components/Map/Map";
+
 function HomePage() {
   return (
     <div
       style={{
+        width: "100vw",
         height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#F7F7F7",
       }}
     >
-      <h1
-        style={{
-          fontSize: "64px",
-          fontWeight: 600,
-          letterSpacing: "-0.05em",
-        }}
-      >
-        Via
-      </h1>
+      <Map />
     </div>
   );
 }
