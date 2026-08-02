@@ -6,6 +6,8 @@ export type TransportType =
   | "bus"
   | "ferry";
 
+export type CityImportance = 1 | 2 | 3 | 4 | 5;
+
 export type City = {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ export type City = {
   countryCode: string;
   position: RoutePoint;
   enabled: boolean;
+  importance: CityImportance;
 };
 
 export type ConnectionOverride = {
@@ -43,6 +46,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [41.38879, 2.15899],
     enabled: true,
+    importance: 5,
   },
   {
     id: "madrid",
@@ -51,6 +55,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [40.41650, -3.70256],
     enabled: true,
+    importance: 5,
   },
   {
     id: "valencia",
@@ -59,6 +64,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [39.47391, -0.37966],
     enabled: true,
+    importance: 4,
   },
   {
     id: "seville",
@@ -67,6 +73,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [37.38283, -5.97317],
     enabled: true,
+    importance: 5,
   },
   {
     id: "malaga",
@@ -75,6 +82,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [36.72016, -4.42034],
     enabled: true,
+    importance: 4,
   },
   {
     id: "granada",
@@ -83,6 +91,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [37.18817, -3.60667],
     enabled: true,
+    importance: 4,
   },
   {
     id: "zaragoza",
@@ -91,6 +100,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [41.65606, -0.87734],
     enabled: true,
+    importance: 3,
   },
   {
     id: "bilbao",
@@ -99,6 +109,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [43.26271, -2.92528],
     enabled: true,
+    importance: 4,
   },
   {
     id: "san-sebastian",
@@ -107,6 +118,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [43.31283, -1.97499],
     enabled: true,
+    importance: 4,
   },
   {
     id: "alicante",
@@ -115,6 +127,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [38.34517, -0.48149],
     enabled: true,
+    importance: 3,
   },
   {
     id: "palma",
@@ -123,6 +136,7 @@ export const cities: City[] = [
     countryCode: "ES",
     position: [39.56939, 2.65024],
     enabled: true,
+    importance: 4,
   },
   {
     id: "lisbon",
@@ -131,6 +145,7 @@ export const cities: City[] = [
     countryCode: "PT",
     position: [38.72509, -9.14980],
     enabled: true,
+    importance: 5,
   },
   {
     id: "porto",
@@ -139,6 +154,7 @@ export const cities: City[] = [
     countryCode: "PT",
     position: [41.14850, -8.61097],
     enabled: true,
+    importance: 5,
   },
   {
     id: "faro",
@@ -147,6 +163,7 @@ export const cities: City[] = [
     countryCode: "PT",
     position: [37.01869, -7.92716],
     enabled: true,
+    importance: 3,
   },
   {
     id: "paris",
@@ -155,6 +172,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [48.85341, 2.34880],
     enabled: true,
+    importance: 5,
   },
   {
     id: "lyon",
@@ -163,6 +181,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [45.74906, 4.84789],
     enabled: true,
+    importance: 4,
   },
   {
     id: "marseille",
@@ -171,6 +190,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [43.29695, 5.38107],
     enabled: true,
+    importance: 4,
   },
   {
     id: "nice",
@@ -179,6 +199,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [43.70313, 7.26608],
     enabled: true,
+    importance: 5,
   },
   {
     id: "toulouse",
@@ -187,6 +208,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [43.60426, 1.44367],
     enabled: true,
+    importance: 4,
   },
   {
     id: "bordeaux",
@@ -195,6 +217,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [44.84124, -0.58046],
     enabled: true,
+    importance: 4,
   },
   {
     id: "montpellier",
@@ -203,6 +226,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [43.61093, 3.87635],
     enabled: true,
+    importance: 3,
   },
   {
     id: "strasbourg",
@@ -211,6 +235,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [48.58392, 7.74553],
     enabled: true,
+    importance: 4,
   },
   {
     id: "lille",
@@ -219,6 +244,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [50.63391, 3.05512],
     enabled: true,
+    importance: 3,
   },
   {
     id: "nantes",
@@ -227,6 +253,7 @@ export const cities: City[] = [
     countryCode: "FR",
     position: [47.21725, -1.55336],
     enabled: true,
+    importance: 3,
   },
   {
     id: "london",
@@ -235,6 +262,7 @@ export const cities: City[] = [
     countryCode: "GB",
     position: [51.50853, -0.12574],
     enabled: true,
+    importance: 5,
   },
   {
     id: "edinburgh",
@@ -243,6 +271,7 @@ export const cities: City[] = [
     countryCode: "GB",
     position: [55.95206, -3.19648],
     enabled: true,
+    importance: 5,
   },
   {
     id: "glasgow",
@@ -251,6 +280,7 @@ export const cities: City[] = [
     countryCode: "GB",
     position: [55.86515, -4.25763],
     enabled: true,
+    importance: 4,
   },
   {
     id: "manchester",
@@ -259,6 +289,7 @@ export const cities: City[] = [
     countryCode: "GB",
     position: [53.48095, -2.23743],
     enabled: true,
+    importance: 4,
   },
   {
     id: "liverpool",
@@ -267,6 +298,7 @@ export const cities: City[] = [
     countryCode: "GB",
     position: [53.41058, -2.97794],
     enabled: true,
+    importance: 4,
   },
   {
     id: "bristol",
@@ -275,6 +307,7 @@ export const cities: City[] = [
     countryCode: "GB",
     position: [51.45523, -2.59665],
     enabled: true,
+    importance: 3,
   },
   {
     id: "dublin",
@@ -283,6 +316,7 @@ export const cities: City[] = [
     countryCode: "IE",
     position: [53.33306, -6.24889],
     enabled: true,
+    importance: 5,
   },
   {
     id: "belfast",
@@ -291,6 +325,7 @@ export const cities: City[] = [
     countryCode: "GB",
     position: [54.59682, -5.92541],
     enabled: true,
+    importance: 3,
   },
   {
     id: "amsterdam",
@@ -299,6 +334,7 @@ export const cities: City[] = [
     countryCode: "NL",
     position: [52.37403, 4.88969],
     enabled: true,
+    importance: 5,
   },
   {
     id: "rotterdam",
@@ -307,6 +343,7 @@ export const cities: City[] = [
     countryCode: "NL",
     position: [51.92250, 4.47917],
     enabled: true,
+    importance: 3,
   },
   {
     id: "brussels",
@@ -315,6 +352,7 @@ export const cities: City[] = [
     countryCode: "BE",
     position: [50.85045, 4.34878],
     enabled: true,
+    importance: 5,
   },
   {
     id: "antwerp",
@@ -323,6 +361,7 @@ export const cities: City[] = [
     countryCode: "BE",
     position: [51.22047, 4.40026],
     enabled: true,
+    importance: 4,
   },
   {
     id: "bruges",
@@ -331,6 +370,7 @@ export const cities: City[] = [
     countryCode: "BE",
     position: [51.20892, 3.22424],
     enabled: true,
+    importance: 4,
   },
   {
     id: "luxembourg",
@@ -339,6 +379,7 @@ export const cities: City[] = [
     countryCode: "LU",
     position: [49.60982, 6.13268],
     enabled: true,
+    importance: 3,
   },
   {
     id: "berlin",
@@ -347,6 +388,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [52.52437, 13.41053],
     enabled: true,
+    importance: 5,
   },
   {
     id: "munich",
@@ -355,6 +397,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [48.13743, 11.57549],
     enabled: true,
+    importance: 5,
   },
   {
     id: "hamburg",
@@ -363,6 +406,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [53.55073, 9.99302],
     enabled: true,
+    importance: 4,
   },
   {
     id: "cologne",
@@ -371,6 +415,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [50.93333, 6.95000],
     enabled: true,
+    importance: 4,
   },
   {
     id: "frankfurt",
@@ -379,6 +424,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [50.11552, 8.68417],
     enabled: true,
+    importance: 3,
   },
   {
     id: "stuttgart",
@@ -387,6 +433,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [48.78232, 9.17702],
     enabled: true,
+    importance: 3,
   },
   {
     id: "nuremberg",
@@ -395,6 +442,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [49.45421, 11.07752],
     enabled: true,
+    importance: 4,
   },
   {
     id: "dresden",
@@ -403,6 +451,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [51.05089, 13.73832],
     enabled: true,
+    importance: 4,
   },
   {
     id: "leipzig",
@@ -411,6 +460,7 @@ export const cities: City[] = [
     countryCode: "DE",
     position: [51.33962, 12.37129],
     enabled: true,
+    importance: 3,
   },
   {
     id: "zurich",
@@ -419,6 +469,7 @@ export const cities: City[] = [
     countryCode: "CH",
     position: [47.36667, 8.55000],
     enabled: true,
+    importance: 4,
   },
   {
     id: "geneva",
@@ -427,6 +478,7 @@ export const cities: City[] = [
     countryCode: "CH",
     position: [46.20222, 6.14569],
     enabled: true,
+    importance: 4,
   },
   {
     id: "basel",
@@ -435,6 +487,7 @@ export const cities: City[] = [
     countryCode: "CH",
     position: [47.55839, 7.57327],
     enabled: true,
+    importance: 3,
   },
   {
     id: "bern",
@@ -443,6 +496,7 @@ export const cities: City[] = [
     countryCode: "CH",
     position: [46.94809, 7.44744],
     enabled: true,
+    importance: 4,
   },
   {
     id: "vienna",
@@ -451,6 +505,7 @@ export const cities: City[] = [
     countryCode: "AT",
     position: [48.20849, 16.37208],
     enabled: true,
+    importance: 5,
   },
   {
     id: "salzburg",
@@ -459,6 +514,7 @@ export const cities: City[] = [
     countryCode: "AT",
     position: [47.79941, 13.04399],
     enabled: true,
+    importance: 5,
   },
   {
     id: "innsbruck",
@@ -467,6 +523,7 @@ export const cities: City[] = [
     countryCode: "AT",
     position: [47.26266, 11.39454],
     enabled: true,
+    importance: 4,
   },
   {
     id: "rome",
@@ -475,6 +532,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [41.89193, 12.51133],
     enabled: true,
+    importance: 5,
   },
   {
     id: "milan",
@@ -483,6 +541,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [45.46427, 9.18951],
     enabled: true,
+    importance: 5,
   },
   {
     id: "venice",
@@ -491,6 +550,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [45.43713, 12.33265],
     enabled: true,
+    importance: 5,
   },
   {
     id: "florence",
@@ -499,6 +559,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [43.77925, 11.24626],
     enabled: true,
+    importance: 5,
   },
   {
     id: "bologna",
@@ -507,6 +568,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [44.49381, 11.33875],
     enabled: true,
+    importance: 4,
   },
   {
     id: "naples",
@@ -515,6 +577,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [40.85216, 14.26811],
     enabled: true,
+    importance: 5,
   },
   {
     id: "turin",
@@ -523,6 +586,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [45.07049, 7.68682],
     enabled: true,
+    importance: 4,
   },
   {
     id: "genoa",
@@ -531,6 +595,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [44.40478, 8.94439],
     enabled: true,
+    importance: 3,
   },
   {
     id: "verona",
@@ -539,6 +604,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [45.43854, 10.99380],
     enabled: true,
+    importance: 4,
   },
   {
     id: "bari",
@@ -547,6 +613,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [41.12066, 16.86982],
     enabled: true,
+    importance: 3,
   },
   {
     id: "palermo",
@@ -555,6 +622,7 @@ export const cities: City[] = [
     countryCode: "IT",
     position: [38.11660, 13.36360],
     enabled: true,
+    importance: 4,
   },
   {
     id: "prague",
@@ -563,6 +631,7 @@ export const cities: City[] = [
     countryCode: "CZ",
     position: [50.08804, 14.42076],
     enabled: true,
+    importance: 5,
   },
   {
     id: "budapest",
@@ -571,6 +640,7 @@ export const cities: City[] = [
     countryCode: "HU",
     position: [47.49835, 19.04045],
     enabled: true,
+    importance: 5,
   },
   {
     id: "krakow",
@@ -579,6 +649,7 @@ export const cities: City[] = [
     countryCode: "PL",
     position: [50.06143, 19.93658],
     enabled: true,
+    importance: 5,
   },
   {
     id: "warsaw",
@@ -587,6 +658,7 @@ export const cities: City[] = [
     countryCode: "PL",
     position: [52.22977, 21.01178],
     enabled: true,
+    importance: 4,
   },
   {
     id: "ljubljana",
@@ -595,6 +667,7 @@ export const cities: City[] = [
     countryCode: "SI",
     position: [46.05108, 14.50513],
     enabled: true,
+    importance: 4,
   },
   {
     id: "zagreb",
@@ -603,6 +676,7 @@ export const cities: City[] = [
     countryCode: "HR",
     position: [45.81444, 15.97798],
     enabled: true,
+    importance: 4,
   },
   {
     id: "split",
@@ -611,6 +685,7 @@ export const cities: City[] = [
     countryCode: "HR",
     position: [43.50891, 16.43915],
     enabled: true,
+    importance: 5,
   },
   {
     id: "dubrovnik",
@@ -619,6 +694,7 @@ export const cities: City[] = [
     countryCode: "HR",
     position: [42.64125, 18.10909],
     enabled: true,
+    importance: 5,
   },
   {
     id: "athens",
@@ -627,6 +703,7 @@ export const cities: City[] = [
     countryCode: "GR",
     position: [37.98376, 23.72784],
     enabled: true,
+    importance: 5,
   },
   {
     id: "thessaloniki",
@@ -635,6 +712,7 @@ export const cities: City[] = [
     countryCode: "GR",
     position: [40.64072, 22.93493],
     enabled: true,
+    importance: 4,
   },
   {
     id: "copenhagen",
@@ -643,6 +721,7 @@ export const cities: City[] = [
     countryCode: "DK",
     position: [55.67594, 12.56553],
     enabled: true,
+    importance: 5,
   },
   {
     id: "stockholm",
@@ -651,6 +730,7 @@ export const cities: City[] = [
     countryCode: "SE",
     position: [59.32938, 18.06871],
     enabled: true,
+    importance: 5,
   },
   {
     id: "oslo",
@@ -659,6 +739,7 @@ export const cities: City[] = [
     countryCode: "NO",
     position: [59.91273, 10.74609],
     enabled: true,
+    importance: 4,
   },
   {
     id: "helsinki",
@@ -667,6 +748,7 @@ export const cities: City[] = [
     countryCode: "FI",
     position: [60.16952, 24.93545],
     enabled: true,
+    importance: 4,
   },
   {
     id: "tallinn",
@@ -675,6 +757,7 @@ export const cities: City[] = [
     countryCode: "EE",
     position: [59.43696, 24.75353],
     enabled: true,
+    importance: 4,
   },
 ];
 

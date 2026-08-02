@@ -6,8 +6,8 @@ import {
 } from "./cityDatabase";
 
 import {
-  getClosestCities,
   getDistanceKm,
+  getRecommendedCities,
 } from "./cityRecommendations";
 
 import { generateRoute } from "./routeGenerator";
@@ -23,6 +23,8 @@ export type GeneratedDestination = {
   route: [number, number][];
   transport: TransportType;
   active: boolean;
+  recommendationScore?: number;
+  directionDifferenceDegrees?: number;
 };
 
 function findConnectionOverride(
@@ -41,8 +43,7 @@ function findConnectionOverride(
 
       const matchesReverse =
         connection.bidirectional &&
-        connection.fromCityId ===
-          destinationCityId &&
+        connection.fromCityId === destinationCityId &&
         connection.toCityId === originCityId;
 
       return matchesForward || matchesReverse;
@@ -163,18 +164,33 @@ export function getGeneratedDestinations(
   originCityId: string,
   count?: number,
   excludedCityIds: readonly string[] = [],
+  previousCityId?: string,
 ): GeneratedDestination[] {
-  return getClosestCities(
+  return getRecommendedCities(
     originCityId,
     count,
     excludedCityIds,
+    previousCityId,
   )
-    .map(({ city }) =>
-      getGeneratedDestination(
-        originCityId,
-        city.id,
-      ),
-    )
+    .map((recommendation) => {
+      const destination =
+        getGeneratedDestination(
+          originCityId,
+          recommendation.city.id,
+        );
+
+      if (!destination) {
+        return undefined;
+      }
+
+      return {
+        ...destination,
+        recommendationScore:
+          recommendation.score,
+        directionDifferenceDegrees:
+          recommendation.directionDifferenceDegrees,
+      };
+    })
     .filter(
       (
         destination,

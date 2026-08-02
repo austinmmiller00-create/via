@@ -213,24 +213,44 @@ function Map() {
     tripState.currentCityId;
 
   const visitedCityIds = useMemo(
-    () => [
-      startingCityId,
-      ...tripState.stops.map(
-        (stop) => stop.cityId,
-      ),
-    ],
-    [tripState.stops],
-  );
+  () => [
+    startingCityId,
+    ...tripState.stops.map(
+      (stop) => stop.cityId,
+    ),
+  ],
+  [tripState.stops],
+);
 
-  const currentDestinations = useMemo(
-    () =>
-      getGeneratedDestinations(
-        currentOriginId,
-        undefined,
-        visitedCityIds,
-      ),
-    [currentOriginId, visitedCityIds],
-  );
+const previousCityId = useMemo(() => {
+  if (tripState.stops.length === 0) {
+    return undefined;
+  }
+
+  if (tripState.stops.length === 1) {
+    return startingCityId;
+  }
+
+  return tripState.stops[
+    tripState.stops.length - 2
+  ].cityId;
+}, [tripState.stops]);
+
+const currentDestinations = useMemo(
+  () =>
+    getGeneratedDestinations(
+      currentOriginId,
+      undefined,
+      visitedCityIds,
+      previousCityId,
+    ),
+  [
+    currentOriginId,
+    previousCityId,
+    visitedCityIds,
+  ],
+);
+
 
   const selectedDestination =
     currentDestinations.find(
