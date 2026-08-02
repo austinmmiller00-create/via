@@ -16,17 +16,15 @@ import "leaflet/dist/leaflet.css";
 import AnimatedRoute from "./AnimatedRoute";
 import DestinationMarker from "./DestinationMarker";
 import RouteCamera from "./RouteCamera";
+import { barcelonaDestinations } from "./destinationData";
 import {
   barcelonaDotIcon,
   barcelonaIcon,
 } from "./mapIcons";
-import {
-  barcelonaPosition,
-  barcelonaToValenciaRoute,
-  valenciaPosition,
-} from "./routeData";
+import { barcelonaPosition } from "./routeData";
 
 const selectionDuration = 3000;
+const valencia = barcelonaDestinations[0];
 
 function Map() {
   const [showValencia, setShowValencia] =
@@ -76,7 +74,7 @@ function Map() {
         style={{ zIndex: 350 }}
       >
         <AnimatedRoute
-          route={barcelonaToValenciaRoute}
+          route={valencia.route}
           duration={4000}
           casingOpacity={0.45}
           routeOpacity={0.4}
@@ -85,7 +83,7 @@ function Map() {
 
         {valenciaSelected && (
           <AnimatedRoute
-            route={barcelonaToValenciaRoute}
+            route={valencia.route}
             duration={selectionDuration}
             casingOpacity={0.95}
             routeOpacity={0.98}
@@ -98,7 +96,7 @@ function Map() {
 
       {valenciaSelected && (
         <RouteCamera
-          route={barcelonaToValenciaRoute}
+          route={valencia.route}
           duration={selectionDuration}
         />
       )}
@@ -115,9 +113,9 @@ function Map() {
 
       {showValencia && (
         <DestinationMarker
-          position={valenciaPosition}
-          name="Valencia"
-          price="€25"
+          position={valencia.position}
+          name={valencia.name}
+          price={valencia.price}
           selected={valenciaSelected}
           arrived={valenciaArrived}
           onSelect={selectValencia}
