@@ -106,8 +106,8 @@ function Map() {
       minZoom={5}
       maxZoom={10}
       zoomSnap={0.1}
-      zoomDelta={0.1}
-      wheelPxPerZoomLevel={2000}
+      zoomDelta={0.3}
+    wheelPxPerZoomLevel={500}
       style={{
         width: "100%",
         height: "100%",
