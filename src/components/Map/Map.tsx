@@ -22,6 +22,11 @@ import "leaflet/dist/leaflet.css";
 import AnimatedRoute from "./AnimatedRoute";
 import DestinationMarker from "./DestinationMarker";
 import ExploreDistanceSlider from "./ExploreDistanceSlider";
+
+import ItineraryPanel, {
+  type ItineraryPanelLeg,
+} from "./ItineraryPanel";
+
 import RouteCamera from "./RouteCamera";
 import StayLengthCard from "./StayLengthCard";
 
@@ -95,7 +100,9 @@ function getLabelPosition(
   originCityId: string,
   destinationPosition: RoutePoint,
 ): LabelPosition {
-  const originCity = getCityById(originCityId);
+  const originCity = getCityById(
+    originCityId,
+  );
 
   if (!originCity) {
     return "right";
@@ -124,7 +131,9 @@ function getLabelPosition(
     : "below";
 }
 
-function getExploreZoom(distanceKm: number) {
+function getExploreZoom(
+  distanceKm: number,
+) {
   const progress = clamp(
     (distanceKm -
       minimumExploreDistanceKm) /
@@ -192,9 +201,10 @@ function ExploreZoomController({
     }
 
     function moveCamera() {
-      const targetZoom = getExploreZoom(
-        latestDistanceRef.current,
-      );
+      const targetZoom =
+        getExploreZoom(
+          latestDistanceRef.current,
+        );
 
       lastCameraUpdateRef.current =
         performance.now();
@@ -204,9 +214,11 @@ function ExploreZoomController({
         targetZoom,
         {
           animate: true,
+
           duration:
             mapStyle.animation
               .exploreCameraDuration,
+
           easeLinearity: 0.35,
         },
       );
@@ -241,7 +253,9 @@ function ExploreZoomController({
       );
 
     return () => {
-      if (timeoutRef.current !== null) {
+      if (
+        timeoutRef.current !== null
+      ) {
         window.clearTimeout(
           timeoutRef.current,
         );
@@ -272,9 +286,10 @@ function PreviewRoute({
   revealId,
   onComplete,
 }: PreviewRouteProps) {
-  const finishRoute = useCallback(() => {
-    onComplete(revealId);
-  }, [onComplete, revealId]);
+  const finishRoute =
+    useCallback(() => {
+      onComplete(revealId);
+    }, [onComplete, revealId]);
 
   const duration = getRouteDuration(
     destination.route,
@@ -285,7 +300,9 @@ function PreviewRoute({
   return (
     <AnimatedRoute
       route={destination.route}
-      transport={destination.transport}
+      transport={
+        destination.transport
+      }
       duration={duration}
       casingOpacity={
         mapStyle.route
@@ -310,9 +327,13 @@ function SelectedRoute({
   destination,
   onComplete,
 }: SelectedRouteProps) {
-  const finishRoute = useCallback(() => {
-    onComplete(destination.id);
-  }, [destination.id, onComplete]);
+  const finishRoute =
+    useCallback(() => {
+      onComplete(destination.id);
+    }, [
+      destination.id,
+      onComplete,
+    ]);
 
   const duration = getRouteDuration(
     destination.route,
@@ -323,7 +344,9 @@ function SelectedRoute({
   return (
     <AnimatedRoute
       route={destination.route}
-      transport={destination.transport}
+      transport={
+        destination.transport
+      }
       duration={duration}
       casingOpacity={
         mapStyle.route
@@ -352,38 +375,56 @@ function StaticRoute({
   return (
     <>
       <Polyline
-        positions={destination.route}
+        positions={
+          destination.route
+        }
         interactive={false}
         pathOptions={{
           color:
-            mapStyle.route.casingColor,
+            mapStyle.route
+              .casingColor,
+
           weight:
-            mapStyle.route.casingWidth,
+            mapStyle.route
+              .casingWidth,
+
           opacity:
             mapStyle.route
               .completedCasingOpacity,
+
           dashArray:
             transportStyle.dashArray,
+
           lineCap:
             transportStyle.lineCap,
+
           lineJoin: "round",
         }}
       />
 
       <Polyline
-        positions={destination.route}
+        positions={
+          destination.route
+        }
         interactive={false}
         pathOptions={{
-          color: transportStyle.color,
+          color:
+            transportStyle.color,
+
           weight:
-            mapStyle.route.lineWidth,
+            mapStyle.route
+              .lineWidth,
+
           opacity:
             mapStyle.route
               .completedOpacity,
+
           dashArray:
             transportStyle.dashArray,
+
           lineCap:
             transportStyle.lineCap,
+
           lineJoin: "round",
         }}
       />
@@ -418,6 +459,7 @@ function Map() {
   const visitedCityIds = useMemo(
     () => [
       startingCityId,
+
       ...tripState.stops.map(
         (stop) => stop.cityId,
       ),
@@ -425,46 +467,54 @@ function Map() {
     [tripState.stops],
   );
 
-  const previousCityId = useMemo(() => {
-    if (tripState.stops.length === 0) {
-      return undefined;
-    }
+  const previousCityId =
+    useMemo(() => {
+      if (
+        tripState.stops.length === 0
+      ) {
+        return undefined;
+      }
 
-    if (tripState.stops.length === 1) {
-      return startingCityId;
-    }
+      if (
+        tripState.stops.length === 1
+      ) {
+        return startingCityId;
+      }
 
-    return tripState.stops[
-      tripState.stops.length - 2
-    ].cityId;
-  }, [tripState.stops]);
+      return tripState.stops[
+        tripState.stops.length - 2
+      ].cityId;
+    }, [tripState.stops]);
 
-  const currentDestinations = useMemo(
-    () =>
-      getGeneratedDestinations(
+  const currentDestinations =
+    useMemo(
+      () =>
+        getGeneratedDestinations(
+          currentOriginId,
+          undefined,
+          visitedCityIds,
+          previousCityId,
+          targetDistanceKm,
+        ),
+      [
         currentOriginId,
-        undefined,
-        visitedCityIds,
         previousCityId,
         targetDistanceKm,
-      ),
-    [
-      currentOriginId,
-      previousCityId,
-      targetDistanceKm,
-      visitedCityIds,
-    ],
-  );
+        visitedCityIds,
+      ],
+    );
 
   const selectedDestination =
     currentDestinations.find(
       (destination) =>
         destination.id ===
-        tripState.selectedDestinationId,
+        tripState
+          .selectedDestinationId,
     );
 
   const selectedArrived =
-    selectedDestination !== undefined &&
+    selectedDestination !==
+      undefined &&
     tripState.arrivedDestinationId ===
       selectedDestination.id;
 
@@ -472,18 +522,25 @@ function Map() {
     selectedDestination !== undefined
       ? getRouteDuration(
           selectedDestination.route,
-          selectedDestination.transport,
+
+          selectedDestination
+            .transport,
+
           "selection",
         )
       : 0;
 
   const completedLegs =
     useMemo<CompletedLeg[]>(() => {
-      const legs: CompletedLeg[] = [];
+      const legs: CompletedLeg[] =
+        [];
 
-      let originId = startingCityId;
+      let originId =
+        startingCityId;
 
-      for (const stop of tripState.stops) {
+      for (
+        const stop of tripState.stops
+      ) {
         const destination =
           getGeneratedDestination(
             originId,
@@ -504,46 +561,81 @@ function Map() {
       return legs;
     }, [tripState.stops]);
 
-  const showDestination = useCallback(
-    (revealId: string) => {
-      setVisibleRouteIds(
-        (currentIds) => {
-          if (
-            currentIds.includes(revealId)
-          ) {
-            return currentIds;
-          }
+  const itineraryLegs =
+    useMemo<ItineraryPanelLeg[]>(
+      () =>
+        completedLegs.map(
+          (leg) => ({
+            cityId:
+              leg.destination.id,
 
-          return [
-            ...currentIds,
-            revealId,
-          ];
-        },
-      );
-    },
-    [],
-  );
+            cityName:
+              leg.destination.name,
 
-  const selectDestination = useCallback(
-    (destinationId: string) => {
-      setTripState(
-        (currentState) => ({
-          ...currentState,
-          selectedDestinationId:
-            destinationId,
-          arrivedDestinationId: null,
-        }),
-      );
-    },
-    [],
-  );
+            days: leg.days,
 
-  const finishDestinationSelection =
+            transport:
+              leg.destination
+                .transport,
+
+            estimatedPriceEur:
+              leg.destination
+                .estimatedPriceEur,
+          }),
+        ),
+      [completedLegs],
+    );
+
+  const showDestination =
+    useCallback(
+      (revealId: string) => {
+        setVisibleRouteIds(
+          (currentIds) => {
+            if (
+              currentIds.includes(
+                revealId,
+              )
+            ) {
+              return currentIds;
+            }
+
+            return [
+              ...currentIds,
+              revealId,
+            ];
+          },
+        );
+      },
+      [],
+    );
+
+  const selectDestination =
     useCallback(
       (destinationId: string) => {
         setTripState(
           (currentState) => ({
             ...currentState,
+
+            selectedDestinationId:
+              destinationId,
+
+            arrivedDestinationId:
+              null,
+          }),
+        );
+      },
+      [],
+    );
+
+  const finishDestinationSelection =
+    useCallback(
+      (
+        destinationId: string,
+      ) => {
+        setTripState(
+          (currentState) => ({
+            ...currentState,
+
             arrivedDestinationId:
               destinationId,
           }),
@@ -552,38 +644,53 @@ function Map() {
       [],
     );
 
-  const confirmStay = useCallback(
-    (
-      destination:
-        GeneratedDestination,
-      days: number,
-    ) => {
-      setTripState(
-        (currentState) => ({
-          currentCityId:
-            destination.id,
-          selectedDestinationId: null,
-          arrivedDestinationId: null,
-          stops: [
-            ...currentState.stops,
-            {
-              cityId:
-                destination.id,
-              cityName:
-                destination.name,
-              days,
-            },
-          ],
-        }),
-      );
-    },
-    [],
-  );
+  const confirmStay =
+    useCallback(
+      (
+        destination:
+          GeneratedDestination,
+
+        days: number,
+      ) => {
+        setTripState(
+          (currentState) => ({
+            currentCityId:
+              destination.id,
+
+            selectedDestinationId:
+              null,
+
+            arrivedDestinationId:
+              null,
+
+            stops: [
+              ...currentState.stops,
+
+              {
+                cityId:
+                  destination.id,
+
+                cityName:
+                  destination.name,
+
+                days,
+              },
+            ],
+          }),
+        );
+      },
+      [],
+    );
 
   const showBarcelonaLabel =
     currentOriginId ===
       startingCityId &&
-    selectedDestination === undefined;
+    selectedDestination ===
+      undefined;
+
+  const startingCityName =
+    getCityById(startingCityId)
+      ?.name ?? "Barcelona";
 
   return (
     <div
@@ -631,7 +738,9 @@ function Map() {
 
         <Pane
           name="route-lines"
-          style={{ zIndex: 350 }}
+          style={{
+            zIndex: 350,
+          }}
         >
           {completedLegs.map(
             (leg, index) => (
@@ -649,6 +758,7 @@ function Map() {
               const revealId =
                 getRevealId(
                   currentOriginId,
+
                   destination.id,
                 );
 
@@ -667,7 +777,9 @@ function Map() {
                     destination={
                       destination
                     }
-                    revealId={revealId}
+                    revealId={
+                      revealId
+                    }
                     onComplete={
                       showDestination
                     }
@@ -686,7 +798,9 @@ function Map() {
                   }
                   duration={getRouteDuration(
                     destination.route,
+
                     destination.transport,
+
                     "retraction",
                   )}
                   casingOpacity={
@@ -775,6 +889,7 @@ function Map() {
                 showLabel={showLabel}
                 labelPosition={getLabelPosition(
                   leg.originId,
+
                   leg.destination
                     .position,
                 )}
@@ -789,6 +904,7 @@ function Map() {
             const revealId =
               getRevealId(
                 currentOriginId,
+
                 destination.id,
               );
 
@@ -824,7 +940,9 @@ function Map() {
                 price={
                   destination.price
                 }
-                selected={isSelected}
+                selected={
+                  isSelected
+                }
                 arrived={
                   isSelected &&
                   selectedArrived
@@ -832,6 +950,7 @@ function Map() {
                 showLabel
                 labelPosition={getLabelPosition(
                   currentOriginId,
+
                   destination.position,
                 )}
                 onSelect={() =>
@@ -845,6 +964,22 @@ function Map() {
         )}
       </MapContainer>
 
+      <div
+        style={{
+          position: "absolute",
+          top: "24px",
+          left: "80px",
+          zIndex: 1000,
+        }}
+      >
+        <ItineraryPanel
+          startingCityName={
+            startingCityName
+          }
+          legs={itineraryLegs}
+        />
+      </div>
+
       {selectedDestination ===
         undefined && (
         <div
@@ -853,6 +988,7 @@ function Map() {
             left: "50%",
             bottom: "24px",
             zIndex: 1000,
+
             transform:
               "translateX(-50%)",
           }}
