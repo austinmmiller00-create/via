@@ -1,17 +1,26 @@
-import { mapStyle } from "./mapStyle";
-
 import {
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+
 import { Polyline } from "react-leaflet";
 
-import type { RoutePoint } from "./routeData";
+import type {
+  RoutePoint,
+  TransportType,
+} from "./cityDatabase";
+
+import {
+  getTransportRouteStyle,
+  mapStyle,
+  type TransportVisualStyle,
+} from "./mapStyle";
 
 type AnimatedRouteProps = {
   route: RoutePoint[];
+  transport: TransportType;
   duration: number;
   casingOpacity: number;
   routeOpacity: number;
@@ -30,8 +39,11 @@ function getDistance(
   start: RoutePoint,
   end: RoutePoint,
 ) {
-  const latitudeDifference = end[0] - start[0];
-  const longitudeDifference = end[1] - start[1];
+  const latitudeDifference =
+    end[0] - start[0];
+
+  const longitudeDifference =
+    end[1] - start[1];
 
   return Math.sqrt(
     latitudeDifference ** 2 +
@@ -41,6 +53,7 @@ function getDistance(
 
 function AnimatedRoute({
   route,
+  transport,
   duration,
   casingOpacity,
   routeOpacity,
@@ -50,6 +63,9 @@ function AnimatedRoute({
   const animationFrameRef =
     useRef<number | null>(null);
 
+  const transportStyle: TransportVisualStyle =
+    getTransportRouteStyle(transport);
+
   const routeMeasurements = useMemo(() => {
     let accumulatedDistance = 0;
 
@@ -57,6 +73,7 @@ function AnimatedRoute({
       .slice(0, -1)
       .map((point, index) => {
         const nextPoint = route[index + 1];
+
         const length = getDistance(
           point,
           nextPoint,
@@ -66,7 +83,8 @@ function AnimatedRoute({
           start: point,
           end: nextPoint,
           length,
-          startDistance: accumulatedDistance,
+          startDistance:
+            accumulatedDistance,
         };
 
         accumulatedDistance += length;
@@ -76,7 +94,8 @@ function AnimatedRoute({
 
     return {
       segments,
-      totalLength: accumulatedDistance,
+      totalLength:
+        accumulatedDistance,
     };
   }, [route]);
 
@@ -100,33 +119,48 @@ function AnimatedRoute({
     }
 
     const targetDistance =
-      routeMeasurements.totalLength * progress;
+      routeMeasurements.totalLength *
+      progress;
 
-    const partialRoute: RoutePoint[] = [route[0]];
+    const partialRoute: RoutePoint[] = [
+      route[0],
+    ];
 
-    for (const segment of routeMeasurements.segments) {
+    for (
+      const segment of
+      routeMeasurements.segments
+    ) {
       const segmentEndDistance =
-        segment.startDistance + segment.length;
+        segment.startDistance +
+        segment.length;
 
-      if (targetDistance >= segmentEndDistance) {
+      if (
+        targetDistance >=
+        segmentEndDistance
+      ) {
         partialRoute.push(segment.end);
         continue;
       }
 
       const distanceIntoSegment =
-        targetDistance - segment.startDistance;
+        targetDistance -
+        segment.startDistance;
 
       const segmentProgress =
         segment.length === 0
           ? 0
-          : distanceIntoSegment / segment.length;
+          : distanceIntoSegment /
+            segment.length;
 
       const partialPoint: RoutePoint = [
         segment.start[0] +
-          (segment.end[0] - segment.start[0]) *
+          (segment.end[0] -
+            segment.start[0]) *
             segmentProgress,
+
         segment.start[1] +
-          (segment.end[1] - segment.start[1]) *
+          (segment.end[1] -
+            segment.start[1]) *
             segmentProgress,
       ];
 
@@ -137,9 +171,10 @@ function AnimatedRoute({
     return partialRoute;
   };
 
-  const [visibleRoute, setVisibleRoute] = useState<
-    RoutePoint[]
-  >(
+  const [
+    visibleRoute,
+    setVisibleRoute,
+  ] = useState<RoutePoint[]>(
     reverse
       ? route
       : route.length > 0
@@ -148,7 +183,9 @@ function AnimatedRoute({
   );
 
   useEffect(() => {
-    let startingTime: number | undefined;
+    let startingTime:
+      | number
+      | undefined;
 
     setVisibleRoute(
       reverse
@@ -158,13 +195,21 @@ function AnimatedRoute({
           : [],
     );
 
-    const animate = (currentTime: number) => {
-      if (startingTime === undefined) {
+    function animate(
+      currentTime: number,
+    ) {
+      if (
+        startingTime === undefined
+      ) {
         startingTime = currentTime;
       }
 
+      const safeDuration =
+        Math.max(duration, 1);
+
       const rawProgress = Math.min(
-        (currentTime - startingTime) / duration,
+        (currentTime - startingTime) /
+          safeDuration,
         1,
       );
 
@@ -173,25 +218,33 @@ function AnimatedRoute({
         : rawProgress;
 
       setVisibleRoute(
-        getPartialRoute(visibleProgress),
+        getPartialRoute(
+          visibleProgress,
+        ),
       );
 
       if (rawProgress < 1) {
         animationFrameRef.current =
-          window.requestAnimationFrame(animate);
+          window.requestAnimationFrame(
+            animate,
+          );
 
         return;
       }
 
       animationFrameRef.current = null;
       onComplete?.();
-    };
+    }
 
     animationFrameRef.current =
-      window.requestAnimationFrame(animate);
+      window.requestAnimationFrame(
+        animate,
+      );
 
     return () => {
-      if (animationFrameRef.current !== null) {
+      if (
+        animationFrameRef.current !== null
+      ) {
         window.cancelAnimationFrame(
           animationFrameRef.current,
         );
@@ -213,25 +266,35 @@ function AnimatedRoute({
     <>
       <Polyline
         positions={visibleRoute}
+        interactive={false}
         pathOptions={{
-          color: "#FFFFFF",
-          weight: mapStyle.route.casingWidth,
+          color:
+            mapStyle.route.casingColor,
+          weight:
+            mapStyle.route.casingWidth,
           opacity: casingOpacity,
-          lineCap: "round",
+          dashArray:
+            transportStyle.dashArray,
+          lineCap:
+            transportStyle.lineCap,
           lineJoin: "round",
-          interactive: false,
         }}
       />
 
       <Polyline
         positions={visibleRoute}
+        interactive={false}
         pathOptions={{
-          color: "#E76F51",
-          weight: mapStyle.route.lineWidth,
+          color:
+            transportStyle.color,
+          weight:
+            mapStyle.route.lineWidth,
           opacity: routeOpacity,
-          lineCap: "round",
+          dashArray:
+            transportStyle.dashArray,
+          lineCap:
+            transportStyle.lineCap,
           lineJoin: "round",
-          interactive: false,
         }}
       />
     </>

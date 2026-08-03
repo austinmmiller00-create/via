@@ -5,14 +5,12 @@ import {
   useRef,
   useState,
 } from "react";
+
 import L from "leaflet";
-import {
-  CircleMarker,
-  Marker,
-} from "react-leaflet";
+import { Marker } from "react-leaflet";
 
 import { mapStyle } from "./mapStyle";
-import type { RoutePoint } from "./routeData";
+import type { RoutePoint } from "./cityDatabase";
 import useFadeIn from "./useFadeIn";
 
 type LabelPosition =
@@ -33,6 +31,22 @@ type DestinationMarkerProps = {
   onSelect: () => void;
 };
 
+function escapeHtml(value: string) {
+  const replacements: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      replacements[character] ?? character,
+  );
+}
+
 function DestinationMarker({
   position,
   name,
@@ -41,22 +55,24 @@ function DestinationMarker({
   arrived,
   stayDays,
   labelPosition = "right",
-  onSelect,
   showLabel = true,
+  onSelect,
 }: DestinationMarkerProps) {
-  const destinationStyle = mapStyle.destination;
+  const destinationStyle =
+    mapStyle.destination;
 
   const [radius, setRadius] = useState(
-    destinationStyle.radius,
+    arrived
+      ? destinationStyle.arrivedRadius
+      : destinationStyle.radius,
   );
 
-  const [hovered, setHovered] = useState(false);
+  const [hovered, setHovered] =
+    useState(false);
 
   const fadeOpacity = useFadeIn(700);
 
-  const radiusRef = useRef(
-    destinationStyle.radius,
-  );
+  const radiusRef = useRef(radius);
 
   const animationFrameRef =
     useRef<number | null>(null);
@@ -69,18 +85,26 @@ function DestinationMarker({
       duration: number,
       onComplete?: () => void,
     ) => {
-      if (animationFrameRef.current !== null) {
+      if (
+        animationFrameRef.current !== null
+      ) {
         window.cancelAnimationFrame(
           animationFrameRef.current,
         );
       }
 
-      const startingRadius = radiusRef.current;
-      const startingTime = performance.now();
+      const startingRadius =
+        radiusRef.current;
 
-      const animate = (currentTime: number) => {
+      const startingTime =
+        performance.now();
+
+      function animate(
+        currentTime: number,
+      ) {
         const progress = Math.min(
-          (currentTime - startingTime) / duration,
+          (currentTime - startingTime) /
+            duration,
           1,
         );
 
@@ -89,7 +113,8 @@ function DestinationMarker({
 
         const nextRadius =
           startingRadius +
-          (targetRadius - startingRadius) *
+          (targetRadius -
+            startingRadius) *
             easedProgress;
 
         radiusRef.current = nextRadius;
@@ -97,24 +122,30 @@ function DestinationMarker({
 
         if (progress < 1) {
           animationFrameRef.current =
-            window.requestAnimationFrame(animate);
+            window.requestAnimationFrame(
+              animate,
+            );
 
           return;
         }
 
         animationFrameRef.current = null;
         onComplete?.();
-      };
+      }
 
       animationFrameRef.current =
-        window.requestAnimationFrame(animate);
+        window.requestAnimationFrame(
+          animate,
+        );
     },
     [],
   );
 
   useEffect(() => {
     return () => {
-      if (animationFrameRef.current !== null) {
+      if (
+        animationFrameRef.current !== null
+      ) {
         window.cancelAnimationFrame(
           animationFrameRef.current,
         );
@@ -141,18 +172,21 @@ function DestinationMarker({
     if (hovered) {
       animateRadius(
         selected
-          ? destinationStyle.hoverRadius + 2
+          ? destinationStyle.hoverRadius +
+              2
           : destinationStyle.hoverRadius,
         180,
       );
-    } else {
-      animateRadius(
-        selected
-          ? destinationStyle.selectedRadius
-          : destinationStyle.radius,
-        180,
-      );
+
+      return;
     }
+
+    animateRadius(
+      selected
+        ? destinationStyle.selectedRadius
+        : destinationStyle.radius,
+      180,
+    );
   }, [
     animateRadius,
     arrived,
@@ -194,109 +228,123 @@ function DestinationMarker({
     selected,
   ]);
 
-  const priceFontSize =
-    destinationStyle.priceSize *
-    (radius / destinationStyle.radius);
+  const combinedIcon = useMemo(() => {
+    /*
+      The Leaflet marker itself has no dimensions.
+      Everything is positioned around its geographic
+      anchor inside one shared HTML element.
+    */
 
-  const priceIcon = useMemo(
-    () =>
-      L.divIcon({
-        className: "",
-        html: `
-          <div style="
-            width: 90px;
-            height: 90px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
+    const boxWidth = 540;
+    const boxHeight = 240;
 
-            font-family: Manrope, sans-serif;
-            font-size: ${priceFontSize}px;
-            font-weight: 800;
-            letter-spacing: -1px;
-            line-height: 1;
-            color: #24324A;
+    const centerX = boxWidth / 2;
+    const centerY = boxHeight / 2;
 
-            text-shadow:
-              0 2px 0 rgba(255,255,255,1),
-              0 3px 7px rgba(36,50,74,0.16);
-          ">
-            ${price}
-          </div>
-        `,
-        iconSize: [90, 90],
-        iconAnchor: [45, 45],
-      }),
-    [price, priceFontSize],
-  );
+    const diameter = radius * 2;
 
-  const stayIcon = useMemo(
-    () =>
-      L.divIcon({
-        className: "",
-        html: `
-          <div style="
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
+    const priceFontSize = Math.max(
+      12,
+      destinationStyle.priceSize *
+        (radius /
+          destinationStyle.radius),
+    );
 
-            font-family: Manrope, sans-serif;
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            line-height: 1;
-            color: #FFFFFF;
+    const circleBackground = arrived
+      ? "#E76F51"
+      : selected
+        ? "#FFF8F5"
+        : "#FFFFFF";
 
-            text-shadow:
-              0 2px 5px rgba(36,50,74,0.25);
-          ">
-            ${stayDays ?? ""}d
-          </div>
-        `,
-        iconSize: [50, 50],
-        iconAnchor: [25, 25],
-      }),
-    [stayDays],
-  );
+    const circleBorderWidth = arrived
+      ? 0
+      : destinationStyle.borderWidth;
 
-  const labelIcon = useMemo(() => {
-    const configurations = {
-      above: {
-        anchor: [100, 76] as [number, number],
-        textAlign: "center",
-      },
-      below: {
-        anchor: [100, -42] as [number, number],
-        textAlign: "center",
-      },
-      left: {
-        anchor: [242, 24] as [number, number],
-        textAlign: "right",
-      },
-      right: {
-        anchor: [-42, 24] as [number, number],
-        textAlign: "left",
-      },
+    const circleText =
+      arrived && stayDays !== undefined
+        ? `${stayDays}d`
+        : arrived
+          ? ""
+          : escapeHtml(price);
+
+    const circleTextColor = arrived
+      ? "#FFFFFF"
+      : "#24324A";
+
+    const circleTextSize = arrived
+      ? 14
+      : priceFontSize;
+
+    const labelGap = 18;
+
+    const labelStyles: Record<
+      LabelPosition,
+      string
+    > = {
+      above: `
+        left: ${centerX}px;
+        top: ${
+          centerY -
+          radius -
+          labelGap
+        }px;
+        transform:
+          translate(-50%, -100%);
+        text-align: center;
+      `,
+
+      below: `
+        left: ${centerX}px;
+        top: ${
+          centerY +
+          radius +
+          labelGap
+        }px;
+        transform:
+          translate(-50%, 0);
+        text-align: center;
+      `,
+
+      left: `
+        right: ${
+          boxWidth -
+          centerX +
+          radius +
+          labelGap
+        }px;
+        top: ${centerY}px;
+        transform:
+          translate(0, -50%);
+        text-align: right;
+      `,
+
+      right: `
+        left: ${
+          centerX +
+          radius +
+          labelGap
+        }px;
+        top: ${centerY}px;
+        transform:
+          translate(0, -50%);
+        text-align: left;
+      `,
     };
 
-    const configuration =
-      configurations[labelPosition];
-
-    return L.divIcon({
-      className: "",
-      html: `
+    const labelHtml = showLabel
+      ? `
         <div style="
-          width: 200px;
-          text-align: ${configuration.textAlign};
+          position: absolute;
+          width: 220px;
           pointer-events: none;
           white-space: nowrap;
 
-          font-family: Manrope, sans-serif;
-          font-size: ${destinationStyle.labelSize}px;
+          ${labelStyles[labelPosition]}
+
+          font-family:
+            Manrope, sans-serif;
+          font-size:
+            ${destinationStyle.labelSize}px;
           font-weight: 800;
           letter-spacing: -1.5px;
           line-height: 1;
@@ -305,94 +353,139 @@ function DestinationMarker({
           text-shadow:
             0 2px 0 white,
             0 0 8px white,
-            0 3px 8px rgba(36,50,74,0.18);
+            0 3px 8px
+              rgba(36,50,74,0.18);
         ">
-          ${name}
+          ${escapeHtml(name)}
+        </div>
+      `
+      : "";
+
+    return L.divIcon({
+      className: "via-destination-icon",
+
+      /*
+        A zero-sized Leaflet icon keeps the geographic
+        anchor stable while the animated circle changes
+        size.
+      */
+
+      iconSize: [0, 0],
+      iconAnchor: [0, 0],
+
+      html: `
+        <div style="
+          position: absolute;
+          left: -${centerX}px;
+          top: -${centerY}px;
+          width: ${boxWidth}px;
+          height: ${boxHeight}px;
+          pointer-events: none;
+        ">
+          <div style="
+            position: absolute;
+            left: ${centerX}px;
+            top: ${centerY}px;
+            transform:
+              translate(-50%, -50%);
+
+            width: ${diameter}px;
+            height: ${diameter}px;
+            box-sizing: border-box;
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            pointer-events: ${
+              arrived ? "none" : "auto"
+            };
+            cursor: ${
+              arrived
+                ? "default"
+                : "pointer"
+            };
+
+            background:
+              ${circleBackground};
+
+            border:
+              ${circleBorderWidth}px
+              solid #E76F51;
+
+            box-shadow:
+              0 0 0
+              ${
+                destinationStyle
+                  .outerBorderWidth
+              }px
+              #FFFFFF;
+
+            font-family:
+              Manrope, sans-serif;
+            font-size:
+              ${circleTextSize}px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1;
+            color: ${circleTextColor};
+
+            text-shadow:
+              0 2px 0
+                rgba(255,255,255,1),
+              0 3px 7px
+                rgba(36,50,74,0.16);
+          ">
+            ${circleText}
+          </div>
+
+          ${labelHtml}
         </div>
       `,
-      iconSize: [200, 48],
-      iconAnchor: configuration.anchor,
     });
   }, [
-    destinationStyle.labelSize,
+    arrived,
+    destinationStyle,
     labelPosition,
     name,
+    price,
+    radius,
+    selected,
+    showLabel,
+    stayDays,
   ]);
 
   return (
-    <>
-      <CircleMarker
-        center={position}
-        radius={
-          radius +
-          destinationStyle.outerBorderWidth
-        }
-        pathOptions={{
-          color: "#FFFFFF",
-          fillColor: "#FFFFFF",
-          opacity: fadeOpacity,
-          fillOpacity: fadeOpacity,
-          weight: 0,
-          interactive: false,
-        }}
-      />
+    <Marker
+      position={position}
+      icon={combinedIcon}
+      opacity={fadeOpacity}
+      interactive={!arrived}
+      keyboard={!arrived}
+      zIndexOffset={
+        selected
+          ? 1000
+          : hovered
+            ? 500
+            : arrived
+              ? -100
+              : 0
+      }
+      eventHandlers={{
+        mouseover: () => {
+          if (!arrived) {
+            setHovered(true);
+          }
+        },
 
-      <CircleMarker
-        center={position}
-        radius={radius}
-        pathOptions={{
-          color: "#E76F51",
-          fillColor: arrived
-            ? "#E76F51"
-            : selected
-              ? "#FFF8F5"
-              : "#FFFFFF",
-          opacity: fadeOpacity,
-          fillOpacity: fadeOpacity,
-          weight: arrived
-            ? 0
-            : destinationStyle.borderWidth,
-        }}
-        eventHandlers={{
-          mouseover: () => {
-            if (!arrived) {
-              setHovered(true);
-            }
-          },
-          mouseout: () => {
-            setHovered(false);
-          },
-          click: handleClick,
-        }}
-      />
+        mouseout: () => {
+          setHovered(false);
+        },
 
-      {!arrived && (
-        <Marker
-          position={position}
-          icon={priceIcon}
-          opacity={fadeOpacity}
-          interactive={false}
-        />
-      )}
-
-      {arrived && stayDays !== undefined && (
-        <Marker
-          position={position}
-          icon={stayIcon}
-          opacity={fadeOpacity}
-          interactive={false}
-        />
-      )}
-
-      {showLabel && (
-        <Marker
-            position={position}
-            icon={labelIcon}
-            opacity={fadeOpacity}
-            interactive={false}
-        />
-        )}
-    </>
+        click: handleClick,
+      }}
+    />
   );
 }
 

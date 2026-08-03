@@ -2,12 +2,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-
-import type {
-  LatLngBoundsExpression,
-} from "leaflet";
 
 import {
   MapContainer,
@@ -44,7 +41,11 @@ import {
   barcelonaIcon,
 } from "./mapIcons";
 
-import { mapStyle } from "./mapStyle";
+import {
+  getTransportRouteStyle,
+  mapStyle,
+} from "./mapStyle";
+
 import { getRouteDuration } from "./routeAnimation";
 import type { TripState } from "./tripTypes";
 
@@ -81,51 +82,6 @@ function clamp(
     maximum,
     Math.max(minimum, value),
   );
-}
-
-function degreesToRadians(value: number) {
-  return value * (Math.PI / 180);
-}
-
-function getExploreBounds(
-  position: RoutePoint,
-  targetDistanceKm: number,
-): LatLngBoundsExpression {
-  /*
-    The extra space accounts for recommendation
-    tolerance, labels and the bottom slider.
-  */
-
-  const visibleRadiusKm = clamp(
-    targetDistanceKm * 1.5 + 100,
-    250,
-    2400,
-  );
-
-  const latitudeRadius =
-    visibleRadiusKm / 111;
-
-  const longitudeScale = Math.max(
-    Math.cos(
-      degreesToRadians(position[0]),
-    ),
-    0.25,
-  );
-
-  const longitudeRadius =
-    visibleRadiusKm /
-    (111 * longitudeScale);
-
-  return [
-    [
-      position[0] - latitudeRadius,
-      position[1] - longitudeRadius,
-    ],
-    [
-      position[0] + latitudeRadius,
-      position[1] + longitudeRadius,
-    ],
-  ];
 }
 
 function getRevealId(
@@ -168,6 +124,25 @@ function getLabelPosition(
     : "below";
 }
 
+function getExploreZoom(distanceKm: number) {
+  const progress = clamp(
+    (distanceKm -
+      minimumExploreDistanceKm) /
+      (maximumExploreDistanceKm -
+        minimumExploreDistanceKm),
+    0,
+    1,
+  );
+
+  const nearZoom = 7.1;
+  const farZoom = 4.15;
+
+  return (
+    nearZoom -
+    progress * (nearZoom - farZoom)
+  );
+}
+
 type ExploreZoomControllerProps = {
   cityId: string;
   distanceKm: number;
@@ -181,8 +156,32 @@ function ExploreZoomController({
 }: ExploreZoomControllerProps) {
   const map = useMap();
 
+  const latestDistanceRef =
+    useRef(distanceKm);
+
+  const lastCameraUpdateRef =
+    useRef(0);
+
+  const timeoutRef =
+    useRef<number | null>(null);
+
+  useEffect(() => {
+    latestDistanceRef.current =
+      distanceKm;
+  }, [distanceKm]);
+
   useEffect(() => {
     if (!enabled) {
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(
+          timeoutRef.current,
+        );
+
+        timeoutRef.current = null;
+      }
+
+      map.stop();
+
       return;
     }
 
@@ -192,25 +191,64 @@ function ExploreZoomController({
       return;
     }
 
-    const bounds = getExploreBounds(
-      city.position,
-      distanceKm,
+    function moveCamera() {
+      const targetZoom = getExploreZoom(
+        latestDistanceRef.current,
+      );
+
+      lastCameraUpdateRef.current =
+        performance.now();
+
+      map.flyTo(
+        city.position,
+        targetZoom,
+        {
+          animate: true,
+          duration:
+            mapStyle.animation
+              .exploreCameraDuration,
+          easeLinearity: 0.35,
+        },
+      );
+
+      timeoutRef.current = null;
+    }
+
+    const timeSinceLastUpdate =
+      performance.now() -
+      lastCameraUpdateRef.current;
+
+    const minimumUpdateGap =
+      mapStyle.animation
+        .exploreCameraUpdateGap;
+
+    const delay = Math.max(
+      0,
+      minimumUpdateGap -
+        timeSinceLastUpdate,
     );
 
-    /*
-      Stop the previous flight so the camera smoothly
-      follows the latest slider position.
-    */
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(
+        timeoutRef.current,
+      );
+    }
 
-    map.stop();
+    timeoutRef.current =
+      window.setTimeout(
+        moveCamera,
+        delay,
+      );
 
-    map.flyToBounds(bounds, {
-      animate: true,
-      duration: 0.8,
-      easeLinearity: 0.15,
-      padding: [80, 125],
-      maxZoom: 8,
-    });
+    return () => {
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(
+          timeoutRef.current,
+        );
+
+        timeoutRef.current = null;
+      }
+    };
   }, [
     cityId,
     distanceKm,
@@ -224,7 +262,9 @@ function ExploreZoomController({
 type PreviewRouteProps = {
   destination: GeneratedDestination;
   revealId: string;
-  onComplete: (revealId: string) => void;
+  onComplete: (
+    revealId: string,
+  ) => void;
 };
 
 function PreviewRoute({
@@ -245,9 +285,15 @@ function PreviewRoute({
   return (
     <AnimatedRoute
       route={destination.route}
+      transport={destination.transport}
       duration={duration}
-      casingOpacity={0.45}
-      routeOpacity={0.4}
+      casingOpacity={
+        mapStyle.route
+          .previewCasingOpacity
+      }
+      routeOpacity={
+        mapStyle.route.previewOpacity
+      }
       onComplete={finishRoute}
     />
   );
@@ -255,7 +301,9 @@ function PreviewRoute({
 
 type SelectedRouteProps = {
   destination: GeneratedDestination;
-  onComplete: (destinationId: string) => void;
+  onComplete: (
+    destinationId: string,
+  ) => void;
 };
 
 function SelectedRoute({
@@ -275,9 +323,15 @@ function SelectedRoute({
   return (
     <AnimatedRoute
       route={destination.route}
+      transport={destination.transport}
       duration={duration}
-      casingOpacity={0.95}
-      routeOpacity={0.98}
+      casingOpacity={
+        mapStyle.route
+          .selectedCasingOpacity
+      }
+      routeOpacity={
+        mapStyle.route.selectedOpacity
+      }
       onComplete={finishRoute}
     />
   );
@@ -290,16 +344,28 @@ type StaticRouteProps = {
 function StaticRoute({
   destination,
 }: StaticRouteProps) {
+  const transportStyle =
+    getTransportRouteStyle(
+      destination.transport,
+    );
+
   return (
     <>
       <Polyline
         positions={destination.route}
         interactive={false}
         pathOptions={{
-          color: "#FFFFFF",
-          weight: mapStyle.route.casingWidth,
-          opacity: 0.95,
-          lineCap: "round",
+          color:
+            mapStyle.route.casingColor,
+          weight:
+            mapStyle.route.casingWidth,
+          opacity:
+            mapStyle.route
+              .completedCasingOpacity,
+          dashArray:
+            transportStyle.dashArray,
+          lineCap:
+            transportStyle.lineCap,
           lineJoin: "round",
         }}
       />
@@ -308,10 +374,16 @@ function StaticRoute({
         positions={destination.route}
         interactive={false}
         pathOptions={{
-          color: "#E76F51",
-          weight: mapStyle.route.lineWidth,
-          opacity: 0.98,
-          lineCap: "round",
+          color: transportStyle.color,
+          weight:
+            mapStyle.route.lineWidth,
+          opacity:
+            mapStyle.route
+              .completedOpacity,
+          dashArray:
+            transportStyle.dashArray,
+          lineCap:
+            transportStyle.lineCap,
           lineJoin: "round",
         }}
       />
@@ -326,7 +398,9 @@ function Map() {
   ] = useState<string[]>([]);
 
   const [tripState, setTripState] =
-    useState<TripState>(initialTripState);
+    useState<TripState>(
+      initialTripState,
+    );
 
   const [
     sliderDistanceKm,
@@ -432,28 +506,34 @@ function Map() {
 
   const showDestination = useCallback(
     (revealId: string) => {
-      setVisibleRouteIds((currentIds) => {
-        if (currentIds.includes(revealId)) {
-          return currentIds;
-        }
+      setVisibleRouteIds(
+        (currentIds) => {
+          if (
+            currentIds.includes(revealId)
+          ) {
+            return currentIds;
+          }
 
-        return [
-          ...currentIds,
-          revealId,
-        ];
-      });
+          return [
+            ...currentIds,
+            revealId,
+          ];
+        },
+      );
     },
     [],
   );
 
   const selectDestination = useCallback(
     (destinationId: string) => {
-      setTripState((currentState) => ({
-        ...currentState,
-        selectedDestinationId:
-          destinationId,
-        arrivedDestinationId: null,
-      }));
+      setTripState(
+        (currentState) => ({
+          ...currentState,
+          selectedDestinationId:
+            destinationId,
+          arrivedDestinationId: null,
+        }),
+      );
     },
     [],
   );
@@ -461,39 +541,48 @@ function Map() {
   const finishDestinationSelection =
     useCallback(
       (destinationId: string) => {
-        setTripState((currentState) => ({
-          ...currentState,
-          arrivedDestinationId:
-            destinationId,
-        }));
+        setTripState(
+          (currentState) => ({
+            ...currentState,
+            arrivedDestinationId:
+              destinationId,
+          }),
+        );
       },
       [],
     );
 
   const confirmStay = useCallback(
     (
-      destination: GeneratedDestination,
+      destination:
+        GeneratedDestination,
       days: number,
     ) => {
-      setTripState((currentState) => ({
-        currentCityId: destination.id,
-        selectedDestinationId: null,
-        arrivedDestinationId: null,
-        stops: [
-          ...currentState.stops,
-          {
-            cityId: destination.id,
-            cityName: destination.name,
-            days,
-          },
-        ],
-      }));
+      setTripState(
+        (currentState) => ({
+          currentCityId:
+            destination.id,
+          selectedDestinationId: null,
+          arrivedDestinationId: null,
+          stops: [
+            ...currentState.stops,
+            {
+              cityId:
+                destination.id,
+              cityName:
+                destination.name,
+              days,
+            },
+          ],
+        }),
+      );
     },
     [],
   );
 
   const showBarcelonaLabel =
-    currentOriginId === startingCityId &&
+    currentOriginId ===
+      startingCityId &&
     selectedDestination === undefined;
 
   return (
@@ -531,9 +620,12 @@ function Map() {
 
         <ExploreZoomController
           cityId={currentOriginId}
-          distanceKm={sliderDistanceKm}
+          distanceKm={
+            sliderDistanceKm
+          }
           enabled={
-            selectedDestination === undefined
+            selectedDestination ===
+            undefined
           }
         />
 
@@ -545,17 +637,20 @@ function Map() {
             (leg, index) => (
               <StaticRoute
                 key={`completed-${leg.originId}-${leg.destination.id}-${index}`}
-                destination={leg.destination}
+                destination={
+                  leg.destination
+                }
               />
             ),
           )}
 
           {currentDestinations.map(
             (destination) => {
-              const revealId = getRevealId(
-                currentOriginId,
-                destination.id,
-              );
+              const revealId =
+                getRevealId(
+                  currentOriginId,
+                  destination.id,
+                );
 
               const isSelected =
                 selectedDestination?.id ===
@@ -569,7 +664,9 @@ function Map() {
                 return (
                   <PreviewRoute
                     key={`preview-${revealId}`}
-                    destination={destination}
+                    destination={
+                      destination
+                    }
                     revealId={revealId}
                     onComplete={
                       showDestination
@@ -581,14 +678,25 @@ function Map() {
               return (
                 <AnimatedRoute
                   key={`retract-${revealId}`}
-                  route={destination.route}
+                  route={
+                    destination.route
+                  }
+                  transport={
+                    destination.transport
+                  }
                   duration={getRouteDuration(
                     destination.route,
                     destination.transport,
                     "retraction",
                   )}
-                  casingOpacity={0.45}
-                  routeOpacity={0.4}
+                  casingOpacity={
+                    mapStyle.route
+                      .previewCasingOpacity
+                  }
+                  routeOpacity={
+                    mapStyle.route
+                      .previewOpacity
+                  }
                   reverse
                 />
               );
@@ -614,15 +722,20 @@ function Map() {
               route={
                 selectedDestination.route
               }
-              duration={selectedDuration}
+              duration={
+                selectedDuration
+              }
             />
           )}
 
         <Marker
           position={
-            getCityById(startingCityId)
-              ?.position ??
-            [41.38879, 2.15899]
+            getCityById(
+              startingCityId,
+            )?.position ?? [
+              41.38879,
+              2.15899,
+            ]
           }
           icon={
             showBarcelonaLabel
@@ -647,17 +760,23 @@ function Map() {
               <DestinationMarker
                 key={`completed-marker-${leg.originId}-${leg.destination.id}-${index}`}
                 position={
-                  leg.destination.position
+                  leg.destination
+                    .position
                 }
-                name={leg.destination.name}
-                price={leg.destination.price}
+                name={
+                  leg.destination.name
+                }
+                price={
+                  leg.destination.price
+                }
                 selected={false}
                 arrived
                 stayDays={leg.days}
                 showLabel={showLabel}
                 labelPosition={getLabelPosition(
                   leg.originId,
-                  leg.destination.position,
+                  leg.destination
+                    .position,
                 )}
                 onSelect={() => {}}
               />
@@ -667,10 +786,11 @@ function Map() {
 
         {currentDestinations.map(
           (destination) => {
-            const revealId = getRevealId(
-              currentOriginId,
-              destination.id,
-            );
+            const revealId =
+              getRevealId(
+                currentOriginId,
+                destination.id,
+              );
 
             const isVisible =
               visibleRouteIds.includes(
@@ -698,8 +818,12 @@ function Map() {
                 position={
                   destination.position
                 }
-                name={destination.name}
-                price={destination.price}
+                name={
+                  destination.name
+                }
+                price={
+                  destination.price
+                }
                 selected={isSelected}
                 arrived={
                   isSelected &&
@@ -721,26 +845,34 @@ function Map() {
         )}
       </MapContainer>
 
-      {selectedDestination === undefined && (
+      {selectedDestination ===
+        undefined && (
         <div
           style={{
             position: "absolute",
             left: "50%",
             bottom: "24px",
             zIndex: 1000,
-            transform: "translateX(-50%)",
+            transform:
+              "translateX(-50%)",
           }}
         >
           <ExploreDistanceSlider
-            value={sliderDistanceKm}
+            value={
+              sliderDistanceKm
+            }
             minimum={
               minimumExploreDistanceKm
             }
             maximum={
               maximumExploreDistanceKm
             }
-            onChange={setSliderDistanceKm}
-            onCommit={setTargetDistanceKm}
+            onChange={
+              setSliderDistanceKm
+            }
+            onCommit={
+              setTargetDistanceKm
+            }
           />
         </div>
       )}
