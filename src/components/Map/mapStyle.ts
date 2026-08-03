@@ -82,12 +82,19 @@ export const mapStyle = {
     borderWidth: 6,
 
     labelSize: 30,
-    labelWidth: 220,
-    labelGap: 18,
+    labelGap: 14,
 
     backgroundColor: "#E76F51",
     borderColor: "#FFFFFF",
-    textColor: "#24324A",
+    labelColor: "#24324A",
+
+    circleShadow:
+      "0 5px 13px rgba(0,0,0,0.22), 0 0 0 2px rgba(231,111,81,0.18)",
+
+    labelTextShadow:
+      "0 2px 0 white, 0 0 8px white, 0 3px 8px rgba(36,50,74,0.18)",
+
+    zIndex: 1200,
   },
 
   destination: {
@@ -107,11 +114,6 @@ export const mapStyle = {
 
     labelGap: 18,
     labelWidth: 220,
-
-    /*
-      Invisible layout area surrounding the marker.
-      Increase these if labels are being clipped.
-    */
 
     canvasWidth: 540,
     canvasHeight: 240,
@@ -163,15 +165,55 @@ export const mapStyle = {
   },
 
   stayCard: {
-    borderRadius: 18,
+    width: 290,
+    padding: 22,
+    borderRadius: 22,
 
-    backgroundColor: "#FFFFFF",
+    backgroundColor:
+      "rgba(255, 255, 255, 0.96)",
+
     textColor: "#24324A",
     secondaryTextColor: "#5B6577",
+
     accentColor: "#E76F51",
+    accentTextColor: "#FFFFFF",
+
+    counterBackgroundColor: "#F2F4F7",
+    stepButtonBackgroundColor: "#FFFFFF",
 
     shadow:
-      "0 12px 34px rgba(36, 50, 74, 0.18)",
+      "0 18px 45px rgba(36, 50, 74, 0.22)",
+
+    backdropBlur: 12,
+
+    eyebrowSize: 15,
+    eyebrowOpacity: 0.65,
+    eyebrowMarginBottom: 6,
+
+    citySize: 28,
+    cityLetterSpacing: "-1px",
+    cityMarginBottom: 18,
+
+    questionSize: 16,
+    questionMarginBottom: 12,
+
+    counterPadding: 8,
+    counterBorderRadius: 16,
+    counterMarginBottom: 18,
+
+    stepButtonSize: 44,
+    stepButtonBorderRadius: 12,
+    stepButtonFontSize: 25,
+
+    dayNumberSize: 25,
+    dayUnitSize: 15,
+    dayUnitMarginLeft: 6,
+    dayUnitOpacity: 0.65,
+
+    confirmPaddingVertical: 14,
+    confirmPaddingHorizontal: 18,
+    confirmBorderRadius: 14,
+    confirmFontSize: 16,
   },
 
   animation: {

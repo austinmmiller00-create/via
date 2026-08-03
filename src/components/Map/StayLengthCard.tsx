@@ -32,21 +32,36 @@ function StayLengthCard({
   };
 
   const stepButtonStyle = {
+    appearance: "none",
+
     width: `${cardStyle.stepButtonSize}px`,
+    minWidth: `${cardStyle.stepButtonSize}px`,
     height: `${cardStyle.stepButtonSize}px`,
 
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+
+    padding: 0,
+    margin: 0,
+
     border: "none",
+    outline: "none",
 
     borderRadius:
       `${cardStyle.stepButtonBorderRadius}px`,
 
-    background:
+    backgroundColor:
       cardStyle.stepButtonBackgroundColor,
+
+    boxShadow:
+      "0 3px 10px rgba(36, 50, 74, 0.1)",
 
     fontFamily: typography.family,
     fontSize:
       `${cardStyle.stepButtonFontSize}px`,
     fontWeight: typography.labelWeight,
+    lineHeight: 1,
 
     color: cardStyle.textColor,
     cursor: "pointer",
@@ -56,12 +71,16 @@ function StayLengthCard({
     <div
       style={{
         width: `${cardStyle.width}px`,
+        maxWidth: "calc(100vw - 48px)",
+
+        boxSizing: "border-box",
+
         padding: `${cardStyle.padding}px`,
 
         borderRadius:
           `${cardStyle.borderRadius}px`,
 
-        background:
+        backgroundColor:
           cardStyle.backgroundColor,
 
         boxShadow: cardStyle.shadow,
@@ -70,6 +89,9 @@ function StayLengthCard({
         color: cardStyle.textColor,
 
         backdropFilter:
+          `blur(${cardStyle.backdropBlur}px)`,
+
+        WebkitBackdropFilter:
           `blur(${cardStyle.backdropBlur}px)`,
       }}
     >
@@ -84,11 +106,10 @@ function StayLengthCard({
           fontWeight:
             typography.interfaceWeight,
 
+          lineHeight: 1.25,
+
           color:
             cardStyle.secondaryTextColor,
-
-          opacity:
-            cardStyle.eyebrowOpacity,
         }}
       >
         You’ve arrived in
@@ -107,6 +128,8 @@ function StayLengthCard({
 
           letterSpacing:
             cardStyle.cityLetterSpacing,
+
+          lineHeight: 1.05,
         }}
       >
         {cityName}
@@ -122,6 +145,8 @@ function StayLengthCard({
 
           fontWeight:
             typography.interfaceWeight,
+
+          lineHeight: 1.3,
         }}
       >
         How long are you staying?
@@ -131,8 +156,10 @@ function StayLengthCard({
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent:
-            "space-between",
+          justifyContent: "space-between",
+          gap: "14px",
+
+          boxSizing: "border-box",
 
           marginBottom:
             `${cardStyle.counterMarginBottom}px`,
@@ -143,7 +170,7 @@ function StayLengthCard({
           borderRadius:
             `${cardStyle.counterBorderRadius}px`,
 
-          background:
+          backgroundColor:
             cardStyle.counterBackgroundColor,
         }}
       >
@@ -158,16 +185,24 @@ function StayLengthCard({
 
         <div
           style={{
-            textAlign: "center",
+            flex: 1,
+
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "center",
+
+            whiteSpace: "nowrap",
 
             fontSize:
               `${cardStyle.dayNumberSize}px`,
 
             fontWeight:
               typography.labelWeight,
+
+            lineHeight: 1,
           }}
         >
-          {days}
+          <span>{days}</span>
 
           <span
             style={{
@@ -183,8 +218,7 @@ function StayLengthCard({
               color:
                 cardStyle.secondaryTextColor,
 
-              opacity:
-                cardStyle.dayUnitOpacity,
+              lineHeight: 1,
             }}
           >
             {days === 1
@@ -207,7 +241,16 @@ function StayLengthCard({
         type="button"
         onClick={() => onConfirm(days)}
         style={{
+          appearance: "none",
+
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+
           width: "100%",
+          boxSizing: "border-box",
+
+          margin: 0,
 
           padding: `
             ${cardStyle.confirmPaddingVertical}px
@@ -215,11 +258,12 @@ function StayLengthCard({
           `,
 
           border: "none",
+          outline: "none",
 
           borderRadius:
             `${cardStyle.confirmBorderRadius}px`,
 
-          background:
+          backgroundColor:
             cardStyle.accentColor,
 
           fontFamily: typography.family,
@@ -229,6 +273,8 @@ function StayLengthCard({
 
           fontWeight:
             typography.labelWeight,
+
+          lineHeight: 1.2,
 
           color:
             cardStyle.accentTextColor,
