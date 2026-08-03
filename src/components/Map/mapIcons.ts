@@ -1,40 +1,58 @@
 import L from "leaflet";
+
 import { mapStyle } from "./mapStyle";
 
-function createBarcelonaIcon(showLabel: boolean) {
-  const {
-    circleSize,
-    borderWidth,
-    labelSize,
-  } = mapStyle.origin;
+function createOriginIcon(
+  label: string,
+  showLabel: boolean,
+) {
+  const originStyle = mapStyle.origin;
+  const typography = mapStyle.typography;
+
+  const labelOffset =
+    originStyle.circleSize / 2 +
+    originStyle.labelGap;
 
   return L.divIcon({
-    className: "via-barcelona-icon",
+    className: "via-origin-icon",
+
     html: `
       <div style="
         position: relative;
         width: 0;
         height: 0;
         overflow: visible;
+        z-index: ${originStyle.zIndex};
       ">
         <span style="
           position: absolute;
           left: 0;
           top: 0;
-          transform: translate(-50%, -50%);
+
+          transform:
+            translate(-50%, -50%);
 
           display: block;
           box-sizing: border-box;
-          width: ${circleSize}px;
-          height: ${circleSize}px;
+
+          width:
+            ${originStyle.circleSize}px;
+
+          height:
+            ${originStyle.circleSize}px;
+
           border-radius: 50%;
 
-          background: #E76F51;
-          border: ${borderWidth}px solid white;
+          background:
+            ${originStyle.backgroundColor};
+
+          border:
+            ${originStyle.borderWidth}px
+            solid
+            ${originStyle.borderColor};
 
           box-shadow:
-            0 5px 13px rgba(0,0,0,0.22),
-            0 0 0 2px rgba(231,111,81,0.18);
+            ${originStyle.circleShadow};
         "></span>
 
         ${
@@ -42,37 +60,53 @@ function createBarcelonaIcon(showLabel: boolean) {
             ? `
               <span style="
                 position: absolute;
-                left: ${circleSize / 2 + 14}px;
-                top: 0;
-                transform: translateY(-50%);
 
-                font-family: Manrope, sans-serif;
-                font-size: ${labelSize}px;
-                font-weight: 800;
-                letter-spacing: -1.5px;
-                line-height: 1;
+                left:
+                  ${labelOffset}px;
+
+                top: 0;
+
+                transform:
+                  translateY(-50%);
+
+                font-family:
+                  ${typography.family};
+
+                font-size:
+                  ${originStyle.labelSize}px;
+
+                font-weight:
+                  ${typography.labelWeight};
+
+                letter-spacing:
+                  ${typography.labelLetterSpacing};
+
+                line-height:
+                  ${typography.labelLineHeight};
+
                 white-space: nowrap;
-                color: #24324A;
+
+                color:
+                  ${originStyle.labelColor};
 
                 text-shadow:
-                  0 2px 0 white,
-                  0 0 8px white,
-                  0 3px 8px rgba(36,50,74,0.18);
+                  ${originStyle.labelTextShadow};
               ">
-                Barcelona
+                ${label}
               </span>
             `
             : ""
         }
       </div>
     `,
+
     iconSize: [0, 0],
     iconAnchor: [0, 0],
   });
 }
 
 export const barcelonaIcon =
-  createBarcelonaIcon(true);
+  createOriginIcon("Barcelona", true);
 
 export const barcelonaDotIcon =
-  createBarcelonaIcon(false);
+  createOriginIcon("Barcelona", false);

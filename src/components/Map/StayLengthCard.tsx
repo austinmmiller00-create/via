@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { mapStyle } from "./mapStyle";
+
 type StayLengthCardProps = {
   cityName: string;
   initialDays?: number;
@@ -11,7 +13,11 @@ function StayLengthCard({
   initialDays = 3,
   onConfirm,
 }: StayLengthCardProps) {
-  const [days, setDays] = useState(initialDays);
+  const [days, setDays] =
+    useState(initialDays);
+
+  const cardStyle = mapStyle.stayCard;
+  const typography = mapStyle.typography;
 
   const decreaseDays = () => {
     setDays((currentDays) =>
@@ -25,26 +31,64 @@ function StayLengthCard({
     );
   };
 
+  const stepButtonStyle = {
+    width: `${cardStyle.stepButtonSize}px`,
+    height: `${cardStyle.stepButtonSize}px`,
+
+    border: "none",
+
+    borderRadius:
+      `${cardStyle.stepButtonBorderRadius}px`,
+
+    background:
+      cardStyle.stepButtonBackgroundColor,
+
+    fontFamily: typography.family,
+    fontSize:
+      `${cardStyle.stepButtonFontSize}px`,
+    fontWeight: typography.labelWeight,
+
+    color: cardStyle.textColor,
+    cursor: "pointer",
+  } as const;
+
   return (
     <div
       style={{
-        width: "290px",
-        padding: "22px",
-        borderRadius: "22px",
-        background: "rgba(255, 255, 255, 0.96)",
-        boxShadow:
-          "0 18px 45px rgba(36, 50, 74, 0.22)",
-        fontFamily: "Manrope, sans-serif",
-        color: "#24324A",
-        backdropFilter: "blur(12px)",
+        width: `${cardStyle.width}px`,
+        padding: `${cardStyle.padding}px`,
+
+        borderRadius:
+          `${cardStyle.borderRadius}px`,
+
+        background:
+          cardStyle.backgroundColor,
+
+        boxShadow: cardStyle.shadow,
+
+        fontFamily: typography.family,
+        color: cardStyle.textColor,
+
+        backdropFilter:
+          `blur(${cardStyle.backdropBlur}px)`,
       }}
     >
       <div
         style={{
-          marginBottom: "6px",
-          fontSize: "15px",
-          fontWeight: 700,
-          opacity: 0.65,
+          marginBottom:
+            `${cardStyle.eyebrowMarginBottom}px`,
+
+          fontSize:
+            `${cardStyle.eyebrowSize}px`,
+
+          fontWeight:
+            typography.interfaceWeight,
+
+          color:
+            cardStyle.secondaryTextColor,
+
+          opacity:
+            cardStyle.eyebrowOpacity,
         }}
       >
         You’ve arrived in
@@ -52,10 +96,17 @@ function StayLengthCard({
 
       <div
         style={{
-          marginBottom: "18px",
-          fontSize: "28px",
-          fontWeight: 800,
-          letterSpacing: "-1px",
+          marginBottom:
+            `${cardStyle.cityMarginBottom}px`,
+
+          fontSize:
+            `${cardStyle.citySize}px`,
+
+          fontWeight:
+            typography.labelWeight,
+
+          letterSpacing:
+            cardStyle.cityLetterSpacing,
         }}
       >
         {cityName}
@@ -63,9 +114,14 @@ function StayLengthCard({
 
       <div
         style={{
-          marginBottom: "12px",
-          fontSize: "16px",
-          fontWeight: 700,
+          marginBottom:
+            `${cardStyle.questionMarginBottom}px`,
+
+          fontSize:
+            `${cardStyle.questionSize}px`,
+
+          fontWeight:
+            typography.interfaceWeight,
         }}
       >
         How long are you staying?
@@ -75,28 +131,27 @@ function StayLengthCard({
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "18px",
-          padding: "8px",
-          borderRadius: "16px",
-          background: "#F2F4F7",
+          justifyContent:
+            "space-between",
+
+          marginBottom:
+            `${cardStyle.counterMarginBottom}px`,
+
+          padding:
+            `${cardStyle.counterPadding}px`,
+
+          borderRadius:
+            `${cardStyle.counterBorderRadius}px`,
+
+          background:
+            cardStyle.counterBackgroundColor,
         }}
       >
         <button
           type="button"
           onClick={decreaseDays}
           aria-label="Decrease stay length"
-          style={{
-            width: "44px",
-            height: "44px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#FFFFFF",
-            fontSize: "25px",
-            fontWeight: 800,
-            color: "#24324A",
-            cursor: "pointer",
-          }}
+          style={stepButtonStyle}
         >
           −
         </button>
@@ -104,20 +159,37 @@ function StayLengthCard({
         <div
           style={{
             textAlign: "center",
-            fontSize: "25px",
-            fontWeight: 800,
+
+            fontSize:
+              `${cardStyle.dayNumberSize}px`,
+
+            fontWeight:
+              typography.labelWeight,
           }}
         >
           {days}
+
           <span
             style={{
-              marginLeft: "6px",
-              fontSize: "15px",
-              fontWeight: 700,
-              opacity: 0.65,
+              marginLeft:
+                `${cardStyle.dayUnitMarginLeft}px`,
+
+              fontSize:
+                `${cardStyle.dayUnitSize}px`,
+
+              fontWeight:
+                typography.interfaceWeight,
+
+              color:
+                cardStyle.secondaryTextColor,
+
+              opacity:
+                cardStyle.dayUnitOpacity,
             }}
           >
-            {days === 1 ? "day" : "days"}
+            {days === 1
+              ? "day"
+              : "days"}
           </span>
         </div>
 
@@ -125,17 +197,7 @@ function StayLengthCard({
           type="button"
           onClick={increaseDays}
           aria-label="Increase stay length"
-          style={{
-            width: "44px",
-            height: "44px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#FFFFFF",
-            fontSize: "25px",
-            fontWeight: 800,
-            color: "#24324A",
-            cursor: "pointer",
-          }}
+          style={stepButtonStyle}
         >
           +
         </button>
@@ -146,14 +208,31 @@ function StayLengthCard({
         onClick={() => onConfirm(days)}
         style={{
           width: "100%",
-          padding: "14px 18px",
+
+          padding: `
+            ${cardStyle.confirmPaddingVertical}px
+            ${cardStyle.confirmPaddingHorizontal}px
+          `,
+
           border: "none",
-          borderRadius: "14px",
-          background: "#E76F51",
-          fontFamily: "Manrope, sans-serif",
-          fontSize: "16px",
-          fontWeight: 800,
-          color: "#FFFFFF",
+
+          borderRadius:
+            `${cardStyle.confirmBorderRadius}px`,
+
+          background:
+            cardStyle.accentColor,
+
+          fontFamily: typography.family,
+
+          fontSize:
+            `${cardStyle.confirmFontSize}px`,
+
+          fontWeight:
+            typography.labelWeight,
+
+          color:
+            cardStyle.accentTextColor,
+
           cursor: "pointer",
         }}
       >

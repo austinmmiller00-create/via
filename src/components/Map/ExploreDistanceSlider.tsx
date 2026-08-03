@@ -1,3 +1,7 @@
+import type { ChangeEvent } from "react";
+
+import { mapStyle } from "./mapStyle";
+
 type ExploreDistanceSliderProps = {
   value: number;
   minimum?: number;
@@ -13,8 +17,11 @@ function ExploreDistanceSlider({
   onChange,
   onCommit,
 }: ExploreDistanceSliderProps) {
+  const sliderStyle = mapStyle.slider;
+  const typography = mapStyle.typography;
+
   function readValue(
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>,
   ) {
     return Number(event.target.value);
   }
@@ -22,20 +29,31 @@ function ExploreDistanceSlider({
   return (
     <div
       style={{
-        width: "min(420px, calc(100vw - 48px))",
-        padding: "16px 20px 14px",
-        borderRadius: "18px",
-        background: "rgba(255, 255, 255, 0.94)",
-        boxShadow:
-          "0 10px 30px rgba(36, 50, 74, 0.18)",
+        width: `min(${sliderStyle.width}px, calc(100vw - 48px))`,
+
+        padding: `
+          ${sliderStyle.paddingTop}px
+          ${sliderStyle.paddingHorizontal}px
+          ${sliderStyle.paddingBottom}px
+        `,
+
+        borderRadius:
+          sliderStyle.borderRadius,
+
+        background:
+          sliderStyle.backgroundColor,
+
+        boxShadow: sliderStyle.shadow,
+
         backdropFilter: "blur(12px)",
-        fontFamily: "Manrope, sans-serif",
+        fontFamily: typography.family,
       }}
     >
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent:
+            "space-between",
           alignItems: "center",
           marginBottom: "10px",
         }}
@@ -43,8 +61,10 @@ function ExploreDistanceSlider({
         <span
           style={{
             fontSize: "14px",
-            fontWeight: 800,
-            color: "#24324A",
+            fontWeight:
+              typography.labelWeight,
+            color:
+              sliderStyle.textColor,
           }}
         >
           Explore further
@@ -53,8 +73,11 @@ function ExploreDistanceSlider({
         <span
           style={{
             fontSize: "13px",
-            fontWeight: 700,
-            color: "#5B6577",
+            fontWeight:
+              typography.interfaceWeight,
+            color:
+              sliderStyle
+                .secondaryTextColor,
           }}
         >
           {Math.round(value)} km
@@ -73,12 +96,16 @@ function ExploreDistanceSlider({
         }
         onPointerUp={(event) =>
           onCommit(
-            Number(event.currentTarget.value),
+            Number(
+              event.currentTarget.value,
+            ),
           )
         }
         onTouchEnd={(event) =>
           onCommit(
-            Number(event.currentTarget.value),
+            Number(
+              event.currentTarget.value,
+            ),
           )
         }
         onKeyUp={(event) => {
@@ -89,25 +116,32 @@ function ExploreDistanceSlider({
             event.key === "End"
           ) {
             onCommit(
-              Number(event.currentTarget.value),
+              Number(
+                event.currentTarget.value,
+              ),
             );
           }
         }}
         style={{
           width: "100%",
           cursor: "pointer",
-          accentColor: "#E76F51",
+          accentColor:
+            sliderStyle.accentColor,
         }}
       />
 
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent:
+            "space-between",
           marginTop: "6px",
           fontSize: "12px",
-          fontWeight: 700,
-          color: "#7A8495",
+          fontWeight:
+            typography.interfaceWeight,
+          color:
+            sliderStyle
+              .secondaryTextColor,
         }}
       >
         <span>Near</span>

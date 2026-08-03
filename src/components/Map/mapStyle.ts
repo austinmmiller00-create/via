@@ -28,6 +28,9 @@ export const mapStyle = {
 
     labelLetterSpacing: "-1.5px",
     priceLetterSpacing: "-1px",
+
+    labelLineHeight: 1,
+    priceLineHeight: 1,
   },
 
   route: {
@@ -59,11 +62,6 @@ export const mapStyle = {
 
       plane: {
         color: "#4C78A8",
-
-        /*
-          Very short rounded dashes appear as dots.
-        */
-
         dashArray: "2 18",
         lineCap: "round",
       },
@@ -82,7 +80,10 @@ export const mapStyle = {
   origin: {
     circleSize: 46,
     borderWidth: 6,
+
     labelSize: 30,
+    labelWidth: 220,
+    labelGap: 18,
 
     backgroundColor: "#E76F51",
     borderColor: "#FFFFFF",
@@ -100,8 +101,20 @@ export const mapStyle = {
     outerBorderWidth: 5,
 
     priceSize: 22,
+    minimumPriceSize: 12,
     labelSize: 30,
     staySize: 14,
+
+    labelGap: 18,
+    labelWidth: 220,
+
+    /*
+      Invisible layout area surrounding the marker.
+      Increase these if labels are being clipped.
+    */
+
+    canvasWidth: 540,
+    canvasHeight: 240,
 
     backgroundColor: "#FFFFFF",
     selectedBackgroundColor: "#FFF8F5",
@@ -112,9 +125,21 @@ export const mapStyle = {
 
     textColor: "#24324A",
     arrivedTextColor: "#FFFFFF",
+    labelColor: "#24324A",
 
-    labelGap: 18,
-    labelWidth: 220,
+    priceTextShadow:
+      "0 2px 0 rgba(255,255,255,1), 0 3px 7px rgba(36,50,74,0.16)",
+
+    arrivedTextShadow:
+      "0 2px 5px rgba(36,50,74,0.25)",
+
+    labelTextShadow:
+      "0 2px 0 white, 0 0 8px white, 0 3px 8px rgba(36,50,74,0.18)",
+
+    selectedZIndex: 1000,
+    hoveredZIndex: 500,
+    arrivedZIndex: -100,
+    defaultZIndex: 0,
   },
 
   slider: {
@@ -139,6 +164,7 @@ export const mapStyle = {
 
   stayCard: {
     borderRadius: 18,
+
     backgroundColor: "#FFFFFF",
     textColor: "#24324A",
     secondaryTextColor: "#5B6577",

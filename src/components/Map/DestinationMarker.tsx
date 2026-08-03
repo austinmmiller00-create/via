@@ -9,8 +9,8 @@ import {
 import L from "leaflet";
 import { Marker } from "react-leaflet";
 
-import { mapStyle } from "./mapStyle";
 import type { RoutePoint } from "./cityDatabase";
+import { mapStyle } from "./mapStyle";
 import useFadeIn from "./useFadeIn";
 
 type LabelPosition =
@@ -61,6 +61,12 @@ function DestinationMarker({
   const destinationStyle =
     mapStyle.destination;
 
+  const animationStyle =
+    mapStyle.animation;
+
+  const typography =
+    mapStyle.typography;
+
   const [radius, setRadius] = useState(
     arrived
       ? destinationStyle.arrivedRadius
@@ -70,7 +76,9 @@ function DestinationMarker({
   const [hovered, setHovered] =
     useState(false);
 
-  const fadeOpacity = useFadeIn(700);
+  const fadeOpacity = useFadeIn(
+    animationStyle.markerFadeDuration,
+  );
 
   const radiusRef = useRef(radius);
 
@@ -163,7 +171,8 @@ function DestinationMarker({
 
       animateRadius(
         destinationStyle.arrivedRadius,
-        300,
+        animationStyle
+          .markerArrivalDuration,
       );
 
       return;
@@ -175,7 +184,8 @@ function DestinationMarker({
           ? destinationStyle.hoverRadius +
               2
           : destinationStyle.hoverRadius,
-        180,
+        animationStyle
+          .markerHoverDuration,
       );
 
       return;
@@ -185,12 +195,17 @@ function DestinationMarker({
       selected
         ? destinationStyle.selectedRadius
         : destinationStyle.radius,
-      180,
+      animationStyle.markerHoverDuration,
     );
   }, [
     animateRadius,
+    animationStyle.markerArrivalDuration,
+    animationStyle.markerHoverDuration,
     arrived,
-    destinationStyle,
+    destinationStyle.arrivedRadius,
+    destinationStyle.hoverRadius,
+    destinationStyle.radius,
+    destinationStyle.selectedRadius,
     hovered,
     selected,
   ]);
@@ -209,11 +224,13 @@ function DestinationMarker({
 
     animateRadius(
       destinationStyle.popRadius,
-      140,
+      animationStyle
+        .markerPopOutDuration,
       () => {
         animateRadius(
           destinationStyle.selectedRadius,
-          280,
+          animationStyle
+            .markerPopReturnDuration,
           () => {
             poppingRef.current = false;
           },
@@ -222,21 +239,21 @@ function DestinationMarker({
     );
   }, [
     animateRadius,
+    animationStyle.markerPopOutDuration,
+    animationStyle.markerPopReturnDuration,
     arrived,
-    destinationStyle,
+    destinationStyle.popRadius,
+    destinationStyle.selectedRadius,
     onSelect,
     selected,
   ]);
 
   const combinedIcon = useMemo(() => {
-    /*
-      The Leaflet marker itself has no dimensions.
-      Everything is positioned around its geographic
-      anchor inside one shared HTML element.
-    */
+    const boxWidth =
+      destinationStyle.canvasWidth;
 
-    const boxWidth = 540;
-    const boxHeight = 240;
+    const boxHeight =
+      destinationStyle.canvasHeight;
 
     const centerX = boxWidth / 2;
     const centerY = boxHeight / 2;
@@ -244,17 +261,20 @@ function DestinationMarker({
     const diameter = radius * 2;
 
     const priceFontSize = Math.max(
-      12,
+      destinationStyle.minimumPriceSize,
       destinationStyle.priceSize *
         (radius /
           destinationStyle.radius),
     );
 
     const circleBackground = arrived
-      ? "#E76F51"
+      ? destinationStyle
+          .arrivedBackgroundColor
       : selected
-        ? "#FFF8F5"
-        : "#FFFFFF";
+        ? destinationStyle
+            .selectedBackgroundColor
+        : destinationStyle
+            .backgroundColor;
 
     const circleBorderWidth = arrived
       ? 0
@@ -268,14 +288,22 @@ function DestinationMarker({
           : escapeHtml(price);
 
     const circleTextColor = arrived
-      ? "#FFFFFF"
-      : "#24324A";
+      ? destinationStyle
+          .arrivedTextColor
+      : destinationStyle.textColor;
 
     const circleTextSize = arrived
-      ? 14
+      ? destinationStyle.staySize
       : priceFontSize;
 
-    const labelGap = 18;
+    const circleTextShadow = arrived
+      ? destinationStyle
+          .arrivedTextShadow
+      : destinationStyle
+          .priceTextShadow;
+
+    const labelGap =
+      destinationStyle.labelGap;
 
     const labelStyles: Record<
       LabelPosition,
@@ -335,26 +363,34 @@ function DestinationMarker({
       ? `
         <div style="
           position: absolute;
-          width: 220px;
+          width:
+            ${destinationStyle.labelWidth}px;
+
           pointer-events: none;
           white-space: nowrap;
 
           ${labelStyles[labelPosition]}
 
           font-family:
-            Manrope, sans-serif;
+            ${typography.family};
+
           font-size:
             ${destinationStyle.labelSize}px;
-          font-weight: 800;
-          letter-spacing: -1.5px;
-          line-height: 1;
-          color: #24324A;
+
+          font-weight:
+            ${typography.labelWeight};
+
+          letter-spacing:
+            ${typography.labelLetterSpacing};
+
+          line-height:
+            ${typography.labelLineHeight};
+
+          color:
+            ${destinationStyle.labelColor};
 
           text-shadow:
-            0 2px 0 white,
-            0 0 8px white,
-            0 3px 8px
-              rgba(36,50,74,0.18);
+            ${destinationStyle.labelTextShadow};
         ">
           ${escapeHtml(name)}
         </div>
@@ -363,34 +399,33 @@ function DestinationMarker({
 
     return L.divIcon({
       className: "via-destination-icon",
-
-      /*
-        A zero-sized Leaflet icon keeps the geographic
-        anchor stable while the animated circle changes
-        size.
-      */
-
       iconSize: [0, 0],
       iconAnchor: [0, 0],
 
       html: `
         <div style="
           position: absolute;
+
           left: -${centerX}px;
           top: -${centerY}px;
+
           width: ${boxWidth}px;
           height: ${boxHeight}px;
+
           pointer-events: none;
         ">
           <div style="
             position: absolute;
+
             left: ${centerX}px;
             top: ${centerY}px;
+
             transform:
               translate(-50%, -50%);
 
             width: ${diameter}px;
             height: ${diameter}px;
+
             box-sizing: border-box;
             border-radius: 50%;
 
@@ -398,21 +433,21 @@ function DestinationMarker({
             align-items: center;
             justify-content: center;
 
-            pointer-events: ${
-              arrived ? "none" : "auto"
-            };
-            cursor: ${
-              arrived
+            pointer-events:
+              ${arrived ? "none" : "auto"};
+
+            cursor:
+              ${arrived
                 ? "default"
-                : "pointer"
-            };
+                : "pointer"};
 
             background:
               ${circleBackground};
 
             border:
               ${circleBorderWidth}px
-              solid #E76F51;
+              solid
+              ${destinationStyle.borderColor};
 
             box-shadow:
               0 0 0
@@ -420,22 +455,31 @@ function DestinationMarker({
                 destinationStyle
                   .outerBorderWidth
               }px
-              #FFFFFF;
+              ${
+                destinationStyle
+                  .outerBorderColor
+              };
 
             font-family:
-              Manrope, sans-serif;
+              ${typography.family};
+
             font-size:
               ${circleTextSize}px;
-            font-weight: 800;
-            letter-spacing: -1px;
-            line-height: 1;
-            color: ${circleTextColor};
+
+            font-weight:
+              ${typography.priceWeight};
+
+            letter-spacing:
+              ${typography.priceLetterSpacing};
+
+            line-height:
+              ${typography.priceLineHeight};
+
+            color:
+              ${circleTextColor};
 
             text-shadow:
-              0 2px 0
-                rgba(255,255,255,1),
-              0 3px 7px
-                rgba(36,50,74,0.16);
+              ${circleTextShadow};
           ">
             ${circleText}
           </div>
@@ -454,7 +498,16 @@ function DestinationMarker({
     selected,
     showLabel,
     stayDays,
+    typography,
   ]);
+
+  const zIndexOffset = selected
+    ? destinationStyle.selectedZIndex
+    : hovered
+      ? destinationStyle.hoveredZIndex
+      : arrived
+        ? destinationStyle.arrivedZIndex
+        : destinationStyle.defaultZIndex;
 
   return (
     <Marker
@@ -463,15 +516,7 @@ function DestinationMarker({
       opacity={fadeOpacity}
       interactive={!arrived}
       keyboard={!arrived}
-      zIndexOffset={
-        selected
-          ? 1000
-          : hovered
-            ? 500
-            : arrived
-              ? -100
-              : 0
-      }
+      zIndexOffset={zIndexOffset}
       eventHandlers={{
         mouseover: () => {
           if (!arrived) {
