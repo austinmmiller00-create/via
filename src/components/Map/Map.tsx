@@ -740,6 +740,51 @@ function Map() {
       setShowEndTripSummary(false);
     }, []);
 
+  const undoLastStop =
+    useCallback(() => {
+      setTripState(
+        (currentState) => {
+          if (
+            currentState.stops
+              .length === 0
+          ) {
+            return currentState;
+          }
+
+          const updatedStops =
+            currentState.stops.slice(
+              0,
+              -1,
+            );
+
+          const previousCityId =
+            updatedStops.length === 0
+              ? startingCityId
+              : updatedStops[
+                  updatedStops.length -
+                    1
+                ].cityId;
+
+          return {
+            currentCityId:
+              previousCityId,
+
+            selectedDestinationId:
+              null,
+
+            arrivedDestinationId:
+              null,
+
+            stops: updatedStops,
+          };
+        },
+      );
+
+      setVisibleRouteIds([]);
+      setShowEndTripSummary(false);
+      setTripFinished(false);
+    }, []);
+
   const showBarcelonaLabel =
     currentOriginId ===
       startingCityId &&
@@ -1043,53 +1088,106 @@ function Map() {
         />
 
         {canEndTrip && (
-          <button
-            type="button"
-            onClick={
-              openEndTripSummary
-            }
+          <div
             style={{
-              appearance: "none",
-
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-
-              width: "100%",
-              boxSizing: "border-box",
-
+              gap: "10px",
               marginTop: "10px",
-              padding: "14px 18px",
-
-              border: "none",
-              borderRadius: "14px",
-
-              background:
-                mapStyle.colors.ink,
-
-              boxShadow:
-                "0 10px 28px rgba(36, 50, 74, 0.2)",
-
-              fontFamily:
-                mapStyle.typography
-                  .family,
-
-              fontSize: "15px",
-
-              fontWeight:
-                mapStyle.typography
-                  .labelWeight,
-
-              lineHeight: 1.2,
-
-              color:
-                mapStyle.colors.white,
-
-              cursor: "pointer",
             }}
           >
-            End trip
-          </button>
+            <button
+              type="button"
+              onClick={undoLastStop}
+              style={{
+                appearance: "none",
+
+                flex: 1,
+                boxSizing:
+                  "border-box",
+
+                padding:
+                  "14px 14px",
+
+                border:
+                  "1px solid rgba(36, 50, 74, 0.14)",
+
+                borderRadius:
+                  "14px",
+
+                background:
+                  "rgba(255, 255, 255, 0.96)",
+
+                boxShadow:
+                  "0 8px 22px rgba(36, 50, 74, 0.14)",
+
+                fontFamily:
+                  mapStyle.typography
+                    .family,
+
+                fontSize: "14px",
+
+                fontWeight:
+                  mapStyle.typography
+                    .labelWeight,
+
+                lineHeight: 1.2,
+
+                color:
+                  mapStyle.colors.ink,
+
+                cursor: "pointer",
+              }}
+            >
+              Undo last stop
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                openEndTripSummary
+              }
+              style={{
+                appearance: "none",
+
+                flex: 1,
+                boxSizing:
+                  "border-box",
+
+                padding:
+                  "14px 14px",
+
+                border: "none",
+
+                borderRadius:
+                  "14px",
+
+                background:
+                  mapStyle.colors.ink,
+
+                boxShadow:
+                  "0 10px 28px rgba(36, 50, 74, 0.2)",
+
+                fontFamily:
+                  mapStyle.typography
+                    .family,
+
+                fontSize: "14px",
+
+                fontWeight:
+                  mapStyle.typography
+                    .labelWeight,
+
+                lineHeight: 1.2,
+
+                color:
+                  mapStyle.colors.white,
+
+                cursor: "pointer",
+              }}
+            >
+              End trip
+            </button>
+          </div>
         )}
       </div>
 
