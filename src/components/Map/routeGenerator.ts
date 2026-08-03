@@ -78,7 +78,9 @@ function toLocalKilometres(
     (point[1] - origin[1]) *
     111.32 *
     Math.cos(
-      degreesToRadians(referenceLatitude),
+      degreesToRadians(
+        referenceLatitude,
+      ),
     );
 
   return {
@@ -149,23 +151,31 @@ function getCorridorPosition(
 function getTrainWaypointCount(
   distanceKm: number,
 ) {
-  if (distanceKm < 160) {
+  if (distanceKm < 130) {
     return 0;
   }
 
-  if (distanceKm < 350) {
+  if (distanceKm < 300) {
     return 1;
   }
 
-  if (distanceKm < 650) {
+  if (distanceKm < 500) {
     return 2;
   }
 
-  if (distanceKm < 950) {
+  if (distanceKm < 750) {
     return 3;
   }
 
-  return 4;
+  if (distanceKm < 1000) {
+    return 4;
+  }
+
+  if (distanceKm < 1400) {
+    return 5;
+  }
+
+  return 6;
 }
 
 function getTrainCandidates(
@@ -178,14 +188,14 @@ function getTrainCandidates(
     getDistanceKm(start, end);
 
   const corridorWidthKm = clamp(
-    directDistanceKm * 0.09,
-    28,
-    95,
+    directDistanceKm * 0.22,
+    70,
+    260,
   );
 
   const maximumDetourKm = Math.max(
-    55,
-    directDistanceKm * 0.17,
+    140,
+    directDistanceKm * 0.45,
   );
 
   return cities
@@ -238,7 +248,10 @@ function getTrainCandidates(
 function getCityRouteBonus(city: City) {
   const populationBonus = clamp(
     Math.log10(
-      Math.max(city.population, 10_000),
+      Math.max(
+        city.population,
+        10_000,
+      ),
     ) - 4,
     0,
     3,
@@ -268,8 +281,11 @@ function selectTrainWaypoints(
   directDistanceKm: number,
   seed: number,
 ) {
-  const selected: CorridorCandidate[] = [];
-  const usedCityIds = new Set<string>();
+  const selected: CorridorCandidate[] =
+    [];
+
+  const usedCityIds =
+    new Set<string>();
 
   for (
     let index = 0;
@@ -283,7 +299,9 @@ function selectTrainWaypoints(
     const availableCandidates =
       candidates.filter((candidate) => {
         if (
-          usedCityIds.has(candidate.city.id)
+          usedCityIds.has(
+            candidate.city.id,
+          )
         ) {
           return false;
         }
@@ -337,7 +355,9 @@ function selectTrainWaypoints(
             best.corridorDistanceKm *
               1.4 +
             best.detourKm * 0.55 -
-            getCityRouteBonus(best.city) +
+            getCityRouteBonus(
+              best.city,
+            ) +
             getCandidateTieBreaker(
               seed,
               best.city.id,
@@ -361,14 +381,10 @@ function selectTrainWaypoints(
 
   return selected.sort(
     (first, second) =>
-      first.progress - second.progress,
+      first.progress -
+      second.progress,
   );
 }
-
-/*
-  Creates sharp, angular bends between two major
-  anchors. Every point is joined by a straight segment.
-*/
 
 function generateAngularTrainSegment(
   start: RoutePoint,
@@ -412,7 +428,8 @@ function generateAngularTrainSegment(
 
   const maximumOffset = Math.min(
     routeLength *
-      recommendationConfig.trainRandomness,
+      recommendationConfig
+        .trainRandomness,
     0.18,
   );
 
@@ -444,12 +461,6 @@ function generateAngularTrainSegment(
     );
 
     previousProgress = progress;
-
-    /*
-      Occasionally switch sides of the direct line.
-      This creates purposeful angular direction changes
-      rather than a smooth wave.
-    */
 
     if (random() > 0.58) {
       offsetDirection *= -1;
@@ -501,8 +512,11 @@ function combineAngularTrainSegments(
     index < anchors.length - 1;
     index += 1
   ) {
-    const segmentStart = anchors[index];
-    const segmentEnd = anchors[index + 1];
+    const segmentStart =
+      anchors[index];
+
+    const segmentEnd =
+      anchors[index + 1];
 
     const segmentSeed = createSeed(
       `${seed}:train-segment:${index}`,
@@ -514,11 +528,6 @@ function combineAngularTrainSegments(
         segmentEnd,
         segmentSeed,
       );
-
-    /*
-      Exclude the first point because it is already the
-      final point of the previous segment.
-    */
 
     route.push(...segment.slice(1));
   }
@@ -558,17 +567,14 @@ function generateTrainRoute(
 
   const anchors: RoutePoint[] = [
     start,
+
     ...selectedWaypoints.map(
       (candidate) =>
         candidate.city.position,
     ),
+
     end,
   ];
-
-  /*
-    Hidden towns are major anchors. Smaller sharp
-    bends are generated between every pair of anchors.
-  */
 
   return combineAngularTrainSegments(
     anchors,
