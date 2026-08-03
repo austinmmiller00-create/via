@@ -21,6 +21,7 @@ import "leaflet/dist/leaflet.css";
 
 import AnimatedRoute from "./AnimatedRoute";
 import DestinationMarker from "./DestinationMarker";
+import EndTripSummary from "./EndTripSummary";
 import ExploreDistanceSlider from "./ExploreDistanceSlider";
 
 import ItineraryPanel, {
@@ -70,6 +71,7 @@ const startingCityId = "barcelona";
 
 const minimumExploreDistanceKm = 100;
 const maximumExploreDistanceKm = 1500;
+const defaultExploreDistanceKm = 350;
 
 const initialTripState: TripState = {
   currentCityId: startingCityId,
@@ -100,9 +102,8 @@ function getLabelPosition(
   originCityId: string,
   destinationPosition: RoutePoint,
 ): LabelPosition {
-  const originCity = getCityById(
-    originCityId,
-  );
+  const originCity =
+    getCityById(originCityId);
 
   if (!originCity) {
     return "right";
@@ -253,9 +254,7 @@ function ExploreZoomController({
       );
 
     return () => {
-      if (
-        timeoutRef.current !== null
-      ) {
+      if (timeoutRef.current !== null) {
         window.clearTimeout(
           timeoutRef.current,
         );
@@ -289,7 +288,10 @@ function PreviewRoute({
   const finishRoute =
     useCallback(() => {
       onComplete(revealId);
-    }, [onComplete, revealId]);
+    }, [
+      onComplete,
+      revealId,
+    ]);
 
   const duration = getRouteDuration(
     destination.route,
@@ -375,18 +377,14 @@ function StaticRoute({
   return (
     <>
       <Polyline
-        positions={
-          destination.route
-        }
+        positions={destination.route}
         interactive={false}
         pathOptions={{
           color:
-            mapStyle.route
-              .casingColor,
+            mapStyle.route.casingColor,
 
           weight:
-            mapStyle.route
-              .casingWidth,
+            mapStyle.route.casingWidth,
 
           opacity:
             mapStyle.route
@@ -403,17 +401,13 @@ function StaticRoute({
       />
 
       <Polyline
-        positions={
-          destination.route
-        }
+        positions={destination.route}
         interactive={false}
         pathOptions={{
-          color:
-            transportStyle.color,
+          color: transportStyle.color,
 
           weight:
-            mapStyle.route
-              .lineWidth,
+            mapStyle.route.lineWidth,
 
           opacity:
             mapStyle.route
@@ -446,12 +440,26 @@ function Map() {
   const [
     sliderDistanceKm,
     setSliderDistanceKm,
-  ] = useState(350);
+  ] = useState(
+    defaultExploreDistanceKm,
+  );
 
   const [
     targetDistanceKm,
     setTargetDistanceKm,
-  ] = useState(350);
+  ] = useState(
+    defaultExploreDistanceKm,
+  );
+
+  const [
+    showEndTripSummary,
+    setShowEndTripSummary,
+  ] = useState(false);
+
+  const [
+    tripFinished,
+    setTripFinished,
+  ] = useState(false);
 
   const currentOriginId =
     tripState.currentCityId;
@@ -522,10 +530,8 @@ function Map() {
     selectedDestination !== undefined
       ? getRouteDuration(
           selectedDestination.route,
-
           selectedDestination
             .transport,
-
           "selection",
         )
       : 0;
@@ -682,6 +688,58 @@ function Map() {
       [],
     );
 
+  const openEndTripSummary =
+    useCallback(() => {
+      if (
+        tripState.stops.length === 0
+      ) {
+        return;
+      }
+
+      setTripFinished(false);
+      setShowEndTripSummary(true);
+    }, [tripState.stops.length]);
+
+  const keepExploring =
+    useCallback(() => {
+      setShowEndTripSummary(false);
+      setTripFinished(false);
+    }, []);
+
+  const finishTrip =
+    useCallback(() => {
+      setTripFinished(true);
+    }, []);
+
+  const startNewTrip =
+    useCallback(() => {
+      setTripState({
+        currentCityId:
+          startingCityId,
+
+        selectedDestinationId:
+          null,
+
+        arrivedDestinationId:
+          null,
+
+        stops: [],
+      });
+
+      setVisibleRouteIds([]);
+
+      setSliderDistanceKm(
+        defaultExploreDistanceKm,
+      );
+
+      setTargetDistanceKm(
+        defaultExploreDistanceKm,
+      );
+
+      setTripFinished(false);
+      setShowEndTripSummary(false);
+    }, []);
+
   const showBarcelonaLabel =
     currentOriginId ===
       startingCityId &&
@@ -691,6 +749,12 @@ function Map() {
   const startingCityName =
     getCityById(startingCityId)
       ?.name ?? "Barcelona";
+
+  const canEndTrip =
+    itineraryLegs.length > 0 &&
+    selectedDestination ===
+      undefined &&
+    !showEndTripSummary;
 
   return (
     <div
@@ -732,7 +796,8 @@ function Map() {
           }
           enabled={
             selectedDestination ===
-            undefined
+              undefined &&
+            !showEndTripSummary
           }
         />
 
@@ -758,7 +823,6 @@ function Map() {
               const revealId =
                 getRevealId(
                   currentOriginId,
-
                   destination.id,
                 );
 
@@ -798,9 +862,7 @@ function Map() {
                   }
                   duration={getRouteDuration(
                     destination.route,
-
                     destination.transport,
-
                     "retraction",
                   )}
                   casingOpacity={
@@ -889,7 +951,6 @@ function Map() {
                 showLabel={showLabel}
                 labelPosition={getLabelPosition(
                   leg.originId,
-
                   leg.destination
                     .position,
                 )}
@@ -904,7 +965,6 @@ function Map() {
             const revealId =
               getRevealId(
                 currentOriginId,
-
                 destination.id,
               );
 
@@ -915,7 +975,7 @@ function Map() {
 
             const isSelected =
               selectedDestination?.id ===
-              destination.id;
+                destination.id;
 
             if (!isVisible) {
               return null;
@@ -950,7 +1010,6 @@ function Map() {
                 showLabel
                 labelPosition={getLabelPosition(
                   currentOriginId,
-
                   destination.position,
                 )}
                 onSelect={() =>
@@ -970,6 +1029,10 @@ function Map() {
           top: "24px",
           left: "80px",
           zIndex: 1000,
+
+          width: "310px",
+          maxWidth:
+            "calc(100vw - 104px)",
         }}
       >
         <ItineraryPanel
@@ -978,43 +1041,95 @@ function Map() {
           }
           legs={itineraryLegs}
         />
+
+        {canEndTrip && (
+          <button
+            type="button"
+            onClick={
+              openEndTripSummary
+            }
+            style={{
+              appearance: "none",
+
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+
+              width: "100%",
+              boxSizing: "border-box",
+
+              marginTop: "10px",
+              padding: "14px 18px",
+
+              border: "none",
+              borderRadius: "14px",
+
+              background:
+                mapStyle.colors.ink,
+
+              boxShadow:
+                "0 10px 28px rgba(36, 50, 74, 0.2)",
+
+              fontFamily:
+                mapStyle.typography
+                  .family,
+
+              fontSize: "15px",
+
+              fontWeight:
+                mapStyle.typography
+                  .labelWeight,
+
+              lineHeight: 1.2,
+
+              color:
+                mapStyle.colors.white,
+
+              cursor: "pointer",
+            }}
+          >
+            End trip
+          </button>
+        )}
       </div>
 
       {selectedDestination ===
-        undefined && (
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            bottom: "24px",
-            zIndex: 1000,
+        undefined &&
+        !showEndTripSummary && (
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: "24px",
+              zIndex: 1000,
 
-            transform:
-              "translateX(-50%)",
-          }}
-        >
-          <ExploreDistanceSlider
-            value={
-              sliderDistanceKm
-            }
-            minimum={
-              minimumExploreDistanceKm
-            }
-            maximum={
-              maximumExploreDistanceKm
-            }
-            onChange={
-              setSliderDistanceKm
-            }
-            onCommit={
-              setTargetDistanceKm
-            }
-          />
-        </div>
-      )}
+              transform:
+                "translateX(-50%)",
+            }}
+          >
+            <ExploreDistanceSlider
+              value={
+                sliderDistanceKm
+              }
+              minimum={
+                minimumExploreDistanceKm
+              }
+              maximum={
+                maximumExploreDistanceKm
+              }
+              onChange={
+                setSliderDistanceKm
+              }
+              onCommit={
+                setTargetDistanceKm
+              }
+            />
+          </div>
+        )}
 
       {selectedDestination &&
-        selectedArrived && (
+        selectedArrived &&
+        !showEndTripSummary && (
           <div
             style={{
               position: "absolute",
@@ -1036,6 +1151,25 @@ function Map() {
             />
           </div>
         )}
+
+      {showEndTripSummary && (
+        <EndTripSummary
+          startingCityName={
+            startingCityName
+          }
+          legs={itineraryLegs}
+          finished={tripFinished}
+          onKeepExploring={
+            keepExploring
+          }
+          onFinishTrip={
+            finishTrip
+          }
+          onStartNewTrip={
+            startNewTrip
+          }
+        />
+      )}
     </div>
   );
 }
