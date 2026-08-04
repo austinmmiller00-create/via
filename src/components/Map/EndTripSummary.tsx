@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { ItineraryPanelLeg } from "./ItineraryPanel";
 import { mapStyle } from "./mapStyle";
 
@@ -8,6 +10,7 @@ type EndTripSummaryProps = {
   onKeepExploring: () => void;
   onFinishTrip: () => void;
   onStartNewTrip: () => void;
+  onSaveTrip: (name: string) => void;
 };
 
 function getTransportLabel(
@@ -30,7 +33,20 @@ function EndTripSummary({
   onKeepExploring,
   onFinishTrip,
   onStartNewTrip,
+  onSaveTrip,
 }: EndTripSummaryProps) {
+  const finalCityName =
+    legs[legs.length - 1]?.cityName ??
+    "Trip";
+
+  const [tripName, setTripName] =
+    useState(
+      `${startingCityName} to ${finalCityName}`,
+    );
+
+  const [tripSaved, setTripSaved] =
+    useState(false);
+
   const totalDays = legs.reduce(
     (total, leg) => total + leg.days,
     0,
@@ -45,36 +61,61 @@ function EndTripSummary({
   const typography = mapStyle.typography;
   const colours = mapStyle.colors;
 
+  const saveTrip = () => {
+    const cleanedName = tripName.trim();
+
+    if (!cleanedName || tripSaved) {
+      return;
+    }
+
+    onSaveTrip(cleanedName);
+    setTripSaved(true);
+  };
+
   const secondaryButtonStyle = {
     appearance: "none",
+
     flex: 1,
     boxSizing: "border-box",
+
     padding: "14px 18px",
     margin: 0,
-    border: "1px solid rgba(36, 50, 74, 0.14)",
+
+    border:
+      "1px solid rgba(36, 50, 74, 0.14)",
+
     borderRadius: "14px",
+
     background: "#F2F4F7",
+
     fontFamily: typography.family,
     fontSize: "15px",
     fontWeight: typography.labelWeight,
     lineHeight: 1.2,
+
     color: colours.ink,
     cursor: "pointer",
   } as const;
 
   const primaryButtonStyle = {
     appearance: "none",
+
     flex: 1,
     boxSizing: "border-box",
+
     padding: "14px 18px",
     margin: 0,
+
     border: "none",
     borderRadius: "14px",
+
     background: colours.accent,
+
     fontFamily: typography.family,
     fontSize: "15px",
     fontWeight: typography.labelWeight,
     lineHeight: 1.2,
+
     color: colours.white,
     cursor: "pointer",
   } as const;
@@ -112,13 +153,13 @@ function EndTripSummary({
         style={{
           width: "430px",
           maxWidth: "100%",
-          maxHeight: "calc(100vh - 48px)",
+          maxHeight:
+            "calc(100vh - 48px)",
 
           boxSizing: "border-box",
           overflowY: "auto",
 
           padding: "26px",
-
           borderRadius: "24px",
 
           background:
@@ -173,12 +214,11 @@ function EndTripSummary({
               typography.interfaceWeight,
 
             lineHeight: 1.45,
-
             color: colours.mutedInk,
           }}
         >
           {finished
-            ? "Your itinerary has been completed."
+            ? "Save this itinerary so you can open it again later."
             : "Review your itinerary before ending the trip."}
         </div>
 
@@ -187,25 +227,29 @@ function EndTripSummary({
             display: "grid",
             gridTemplateColumns:
               "repeat(3, 1fr)",
-            gap: "10px",
 
+            gap: "10px",
             marginBottom: "22px",
           }}
         >
           <div
             style={{
               padding: "14px 10px",
+
               borderRadius: "15px",
               background: "#F2F4F7",
+
               textAlign: "center",
             }}
           >
             <div
               style={{
                 marginBottom: "4px",
+
                 fontSize: "12px",
                 fontWeight:
                   typography.interfaceWeight,
+
                 color: colours.mutedInk,
               }}
             >
@@ -226,17 +270,21 @@ function EndTripSummary({
           <div
             style={{
               padding: "14px 10px",
+
               borderRadius: "15px",
               background: "#F2F4F7",
+
               textAlign: "center",
             }}
           >
             <div
               style={{
                 marginBottom: "4px",
+
                 fontSize: "12px",
                 fontWeight:
                   typography.interfaceWeight,
+
                 color: colours.mutedInk,
               }}
             >
@@ -257,17 +305,22 @@ function EndTripSummary({
           <div
             style={{
               padding: "14px 10px",
+
               borderRadius: "15px",
-              background: colours.accentSoft,
+              background:
+                colours.accentSoft,
+
               textAlign: "center",
             }}
           >
             <div
               style={{
                 marginBottom: "4px",
+
                 fontSize: "12px",
                 fontWeight:
                   typography.interfaceWeight,
+
                 color: colours.accent,
               }}
             >
@@ -279,6 +332,7 @@ function EndTripSummary({
                 fontSize: "21px",
                 fontWeight:
                   typography.labelWeight,
+
                 color: colours.accent,
               }}
             >
@@ -323,10 +377,12 @@ function EndTripSummary({
                 height: "13px",
                 flexShrink: 0,
 
-                border: "3px solid #FFFFFF",
-                borderRadius: "50%",
+                border:
+                  "3px solid #FFFFFF",
 
-                background: colours.accent,
+                borderRadius: "50%",
+                background:
+                  colours.accent,
 
                 boxShadow:
                   "0 2px 6px rgba(36, 50, 74, 0.18)",
@@ -367,10 +423,12 @@ function EndTripSummary({
                   width: "10px",
                   height: "10px",
 
-                  border: "2px solid #FFFFFF",
-                  borderRadius: "50%",
+                  border:
+                    "2px solid #FFFFFF",
 
-                  background: colours.accent,
+                  borderRadius: "50%",
+                  background:
+                    colours.accent,
                 }}
               />
 
@@ -392,7 +450,8 @@ function EndTripSummary({
                   fontWeight:
                     typography.interfaceWeight,
 
-                  color: colours.mutedInk,
+                  color:
+                    colours.mutedInk,
                 }}
               >
                 {getTransportLabel(
@@ -410,12 +469,101 @@ function EndTripSummary({
           ))}
         </div>
 
+        {finished && (
+          <div
+            style={{
+              marginBottom: "14px",
+              padding: "16px",
+
+              borderRadius: "17px",
+              background: "#F2F4F7",
+            }}
+          >
+            <label
+              htmlFor="saved-trip-name"
+              style={{
+                display: "block",
+                marginBottom: "8px",
+
+                fontSize: "13px",
+                fontWeight:
+                  typography.labelWeight,
+
+                color: colours.mutedInk,
+              }}
+            >
+              Trip name
+            </label>
+
+            <input
+              id="saved-trip-name"
+              type="text"
+              value={tripName}
+              disabled={tripSaved}
+              onChange={(event) =>
+                setTripName(
+                  event.target.value,
+                )
+              }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+
+                marginBottom: "10px",
+                padding: "12px 13px",
+
+                border:
+                  "1px solid rgba(36, 50, 74, 0.16)",
+
+                borderRadius: "11px",
+                outline: "none",
+
+                background: tripSaved
+                  ? "#E9EDF2"
+                  : "#FFFFFF",
+
+                fontFamily:
+                  typography.family,
+
+                fontSize: "14px",
+                fontWeight:
+                  typography.interfaceWeight,
+
+                color: colours.ink,
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={saveTrip}
+              disabled={tripSaved}
+              style={{
+                ...primaryButtonStyle,
+
+                width: "100%",
+
+                opacity: tripSaved
+                  ? 0.65
+                  : 1,
+
+                cursor: tripSaved
+                  ? "default"
+                  : "pointer",
+              }}
+            >
+              {tripSaved
+                ? "Trip saved"
+                : "Save trip"}
+            </button>
+          </div>
+        )}
+
         {finished ? (
           <button
             type="button"
             onClick={onStartNewTrip}
             style={{
-              ...primaryButtonStyle,
+              ...secondaryButtonStyle,
               width: "100%",
             }}
           >

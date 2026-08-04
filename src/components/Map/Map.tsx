@@ -29,6 +29,7 @@ import ItineraryPanel, {
 } from "./ItineraryPanel";
 
 import RouteCamera from "./RouteCamera";
+import SavedTripsPanel from "./SavedTripsPanel";
 import StayLengthCard from "./StayLengthCard";
 
 import {
@@ -53,6 +54,14 @@ import {
 } from "./mapStyle";
 
 import { getRouteDuration } from "./routeAnimation";
+
+import {
+  createTripStateFromSavedTrip,
+  deleteSavedTrip,
+  loadSavedTrips,
+  saveCompletedTrip,
+  type SavedTrip,
+} from "./savedTripsStorage";
 
 import {
   clearSavedTrip,
@@ -472,6 +481,18 @@ function Map() {
     setTripFinished,
   ] = useState(false);
 
+  const [
+    savedTrips,
+    setSavedTrips,
+  ] = useState<SavedTrip[]>(
+    () => loadSavedTrips(),
+  );
+
+  const [
+    showSavedTrips,
+    setShowSavedTrips,
+  ] = useState(false);
+
   const currentOriginId =
     tripState.currentCityId;
 
@@ -753,6 +774,93 @@ function Map() {
       setTripFinished(true);
     }, []);
 
+  const saveFinishedTrip =
+    useCallback(
+      (name: string) => {
+        if (
+          tripState.stops.length === 0
+        ) {
+          return;
+        }
+
+        const savedTrip =
+          saveCompletedTrip({
+            name,
+            startingCityId,
+            stops: tripState.stops,
+          });
+
+        setSavedTrips(
+          (currentTrips) => [
+            savedTrip,
+
+            ...currentTrips.filter(
+              (trip) =>
+                trip.id !==
+                savedTrip.id,
+            ),
+          ],
+        );
+      },
+      [tripState.stops],
+    );
+
+  const openSavedTripsPanel =
+    useCallback(() => {
+      setSavedTrips(
+        loadSavedTrips(),
+      );
+
+      setShowSavedTrips(true);
+    }, []);
+
+  const closeSavedTripsPanel =
+    useCallback(() => {
+      setShowSavedTrips(false);
+    }, []);
+
+  const openSavedTrip =
+    useCallback(
+      (savedTrip: SavedTrip) => {
+        const restoredTripState =
+          createTripStateFromSavedTrip(
+            savedTrip,
+          );
+
+        clearSavedTrip();
+
+        setTripState(
+          restoredTripState,
+        );
+
+        setVisibleRouteIds([]);
+
+        setSliderDistanceKm(
+          defaultExploreDistanceKm,
+        );
+
+        setTargetDistanceKm(
+          defaultExploreDistanceKm,
+        );
+
+        setTripFinished(false);
+        setShowEndTripSummary(false);
+        setShowSavedTrips(false);
+      },
+      [],
+    );
+
+  const removeSavedTrip =
+    useCallback(
+      (tripId: string) => {
+        const updatedTrips =
+          deleteSavedTrip(tripId);
+
+        setSavedTrips(updatedTrips);
+      },
+      [],
+    );
+
   const startNewTrip =
     useCallback(() => {
       clearSavedTrip();
@@ -782,6 +890,7 @@ function Map() {
 
       setTripFinished(false);
       setShowEndTripSummary(false);
+      setShowSavedTrips(false);
     }, []);
 
   const undoLastStop =
@@ -845,6 +954,12 @@ function Map() {
       undefined &&
     !showEndTripSummary;
 
+  const showSavedTripsButton =
+    selectedDestination ===
+      undefined &&
+    !showEndTripSummary &&
+    !showSavedTrips;
+
   return (
     <div
       style={{
@@ -886,7 +1001,8 @@ function Map() {
           enabled={
             selectedDestination ===
               undefined &&
-            !showEndTripSummary
+            !showEndTripSummary &&
+            !showSavedTrips
           }
         />
 
@@ -1238,9 +1354,61 @@ function Map() {
         )}
       </div>
 
+      {showSavedTripsButton && (
+        <button
+          type="button"
+          onClick={
+            openSavedTripsPanel
+          }
+          style={{
+            position: "absolute",
+            top: "24px",
+            right: "24px",
+            zIndex: 1000,
+
+            appearance: "none",
+
+            padding: "13px 17px",
+
+            border:
+              "1px solid rgba(36, 50, 74, 0.14)",
+
+            borderRadius: "14px",
+
+            background:
+              "rgba(255, 255, 255, 0.96)",
+
+            boxShadow:
+              "0 8px 22px rgba(36, 50, 74, 0.14)",
+
+            fontFamily:
+              mapStyle.typography.family,
+
+            fontSize: "14px",
+
+            fontWeight:
+              mapStyle.typography
+                .labelWeight,
+
+            lineHeight: 1.2,
+
+            color:
+              mapStyle.colors.ink,
+
+            cursor: "pointer",
+          }}
+        >
+          Saved trips
+          {savedTrips.length > 0
+            ? ` (${savedTrips.length})`
+            : ""}
+        </button>
+      )}
+
       {selectedDestination ===
         undefined &&
-        !showEndTripSummary && (
+        !showEndTripSummary &&
+        !showSavedTrips && (
           <div
             style={{
               position: "absolute",
@@ -1274,7 +1442,8 @@ function Map() {
 
       {selectedDestination &&
         selectedArrived &&
-        !showEndTripSummary && (
+        !showEndTripSummary &&
+        !showSavedTrips && (
           <div
             style={{
               position: "absolute",
@@ -1312,6 +1481,24 @@ function Map() {
           }
           onStartNewTrip={
             startNewTrip
+          }
+          onSaveTrip={
+            saveFinishedTrip
+          }
+        />
+      )}
+
+      {showSavedTrips && (
+        <SavedTripsPanel
+          trips={savedTrips}
+          onClose={
+            closeSavedTripsPanel
+          }
+          onOpenTrip={
+            openSavedTrip
+          }
+          onDeleteTrip={
+            removeSavedTrip
           }
         />
       )}
