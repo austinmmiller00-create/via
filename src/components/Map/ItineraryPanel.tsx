@@ -1,5 +1,13 @@
+import type { CSSProperties } from "react";
+
+import Panel from "../ui/Panel";
+
+import {
+  componentStyles,
+  designSystem,
+} from "../../styles/designSystem";
+
 import type { TransportType } from "./cityDatabase";
-import { mapStyle } from "./mapStyle";
 
 export type ItineraryPanelLeg = {
   cityId: string;
@@ -12,6 +20,7 @@ export type ItineraryPanelLeg = {
 type ItineraryPanelProps = {
   startingCityName: string;
   legs: ItineraryPanelLeg[];
+
   onChangeDays?: (
     cityId: string,
     days: number,
@@ -39,6 +48,15 @@ function ItineraryPanel({
   legs,
   onChangeDays,
 }: ItineraryPanelProps) {
+  const typography =
+    designSystem.typography;
+
+  const colours =
+    designSystem.colours;
+
+  const spacing =
+    designSystem.spacing;
+
   const totalPriceEur = legs.reduce(
     (total, leg) =>
       total + leg.estimatedPriceEur,
@@ -49,9 +67,6 @@ function ItineraryPanel({
     (total, leg) => total + leg.days,
     0,
   );
-
-  const typography = mapStyle.typography;
-  const colours = mapStyle.colors;
 
   const changeDays = (
     cityId: string,
@@ -70,7 +85,7 @@ function ItineraryPanel({
     onChangeDays(cityId, updatedDays);
   };
 
-  const editButtonStyle = {
+  const editButtonStyle: CSSProperties = {
     appearance: "none",
 
     display: "flex",
@@ -86,55 +101,88 @@ function ItineraryPanel({
     margin: 0,
 
     border:
-      "1px solid rgba(36, 50, 74, 0.12)",
+      `1px solid ${colours.border}`,
 
-    borderRadius: "8px",
+    borderRadius:
+      designSystem.radii.small,
 
-    background: "#FFFFFF",
+    background:
+      colours.surface,
 
-    fontFamily: typography.family,
+    fontFamily:
+      typography.family,
+
     fontSize: "18px",
-    fontWeight: typography.labelWeight,
+
+    fontWeight:
+      typography.weights.semibold,
+
     lineHeight: 1,
 
     color: colours.ink,
     cursor: "pointer",
-  } as const;
+
+    transition:
+      designSystem.motion.fast,
+  };
+
+  const neutralBadgeStyle:
+    CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+
+    padding: "5px 9px",
+
+    borderRadius:
+      designSystem.radii.small,
+
+    background:
+      colours.surfaceMuted,
+
+    fontFamily:
+      typography.family,
+
+    fontSize:
+      typography.sizes.caption,
+
+    fontWeight:
+      typography.weights.regular,
+
+    color: colours.mutedInk,
+  };
 
   return (
-    <div
+    <Panel
+      padding="none"
       style={{
-        width: "310px",
+        width:
+          designSystem.layout.panelWidth,
+
         maxHeight:
           "calc(100vh - 48px)",
 
-        boxSizing: "border-box",
         overflowY: "auto",
 
         padding: "20px",
-        borderRadius: "22px",
 
-        background:
-          "rgba(255, 255, 255, 0.96)",
-
-        boxShadow:
-          "0 18px 45px rgba(36, 50, 74, 0.2)",
+        borderRadius:
+          designSystem.radii.modal,
 
         backdropFilter: "blur(12px)",
+
         WebkitBackdropFilter:
           "blur(12px)",
-
-        fontFamily: typography.family,
-        color: colours.ink,
       }}
     >
       <div
         style={{
-          marginBottom: "4px",
+          marginBottom: spacing.tiny,
 
-          fontSize: "14px",
+          fontSize:
+            typography.sizes.body,
+
           fontWeight:
-            typography.interfaceWeight,
+            typography.weights.regular,
 
           color: colours.mutedInk,
         }}
@@ -147,10 +195,14 @@ function ItineraryPanel({
           marginBottom: "20px",
 
           fontSize: "26px",
-          fontWeight:
-            typography.labelWeight,
 
-          letterSpacing: "-1px",
+          fontWeight:
+            typography.weights.bold,
+
+          letterSpacing:
+            typography.letterSpacing
+              .heading,
+
           lineHeight: 1.1,
         }}
       >
@@ -161,7 +213,8 @@ function ItineraryPanel({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "12px",
+
+          gap: spacing.regular,
         }}
       >
         <div
@@ -171,23 +224,25 @@ function ItineraryPanel({
             flexShrink: 0,
 
             border:
-              "4px solid #FFFFFF",
+              `4px solid ${colours.surface}`,
 
-            borderRadius: "50%",
+            borderRadius:
+              designSystem.radii.circle,
 
             background:
               colours.accent,
 
             boxShadow:
-              "0 2px 7px rgba(36, 50, 74, 0.2)",
+              designSystem.shadows.subtle,
           }}
         />
 
         <div
           style={{
             fontSize: "16px",
+
             fontWeight:
-              typography.labelWeight,
+              typography.weights.semibold,
           }}
         >
           {startingCityName}
@@ -197,17 +252,20 @@ function ItineraryPanel({
       {legs.length === 0 ? (
         <div
           style={{
-            marginTop: "18px",
-            padding: "16px",
+            ...componentStyles.card,
 
-            borderRadius: "15px",
-            background: "#F2F4F7",
+            marginTop: spacing.xxl,
 
-            fontSize: "14px",
+            fontSize:
+              typography.sizes.body,
+
             fontWeight:
-              typography.interfaceWeight,
+              typography.weights.regular,
 
-            lineHeight: 1.45,
+            lineHeight:
+              typography.lineHeights
+                .normal,
+
             color: colours.mutedInk,
           }}
         >
@@ -224,12 +282,12 @@ function ItineraryPanel({
 
                 marginLeft: "7px",
 
-                paddingTop: "18px",
+                paddingTop: spacing.xxl,
                 paddingBottom: "2px",
                 paddingLeft: "25px",
 
                 borderLeft:
-                  "2px solid rgba(231, 111, 81, 0.32)",
+                  `2px solid ${colours.accentMuted}`,
               }}
             >
               <div
@@ -242,25 +300,31 @@ function ItineraryPanel({
                   height: "12px",
 
                   border:
-                    "3px solid #FFFFFF",
+                    `3px solid ${colours.surface}`,
 
-                  borderRadius: "50%",
+                  borderRadius:
+                    designSystem.radii.circle,
 
                   background:
                     colours.accent,
 
                   boxShadow:
-                    "0 2px 6px rgba(36, 50, 74, 0.18)",
+                    designSystem.shadows.subtle,
                 }}
               />
 
               <div
                 style={{
-                  marginBottom: "7px",
+                  marginBottom:
+                    spacing.small,
 
-                  fontSize: "17px",
+                  fontSize:
+                    typography.sizes
+                      .headingSmall,
+
                   fontWeight:
-                    typography.labelWeight,
+                    typography.weights
+                      .semibold,
                 }}
               >
                 {leg.cityName}
@@ -271,24 +335,14 @@ function ItineraryPanel({
                   display: "flex",
                   flexWrap: "wrap",
                   alignItems: "center",
-                  gap: "6px",
+
+                  gap: spacing.xs,
                 }}
               >
                 <div
-                  style={{
-                    padding: "5px 9px",
-
-                    borderRadius: "9px",
-                    background: "#F2F4F7",
-
-                    fontSize: "12px",
-                    fontWeight:
-                      typography
-                        .interfaceWeight,
-
-                    color:
-                      colours.mutedInk,
-                  }}
+                  style={
+                    neutralBadgeStyle
+                  }
                 >
                   {getTransportLabel(
                     leg.transport,
@@ -300,17 +354,22 @@ function ItineraryPanel({
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "5px",
 
+                      gap: "5px",
                       padding: "3px",
 
-                      borderRadius: "10px",
-                      background: "#F2F4F7",
+                      borderRadius:
+                        designSystem.radii
+                          .input,
+
+                      background:
+                        colours.surfaceMuted,
                     }}
                   >
                     <button
                       type="button"
                       aria-label={`Decrease stay in ${leg.cityName}`}
+                      disabled={leg.days <= 1}
                       onClick={() =>
                         changeDays(
                           leg.cityId,
@@ -318,7 +377,19 @@ function ItineraryPanel({
                           -1,
                         )
                       }
-                      style={editButtonStyle}
+                      style={{
+                        ...editButtonStyle,
+
+                        opacity:
+                          leg.days <= 1
+                            ? 0.45
+                            : 1,
+
+                        cursor:
+                          leg.days <= 1
+                            ? "default"
+                            : "pointer",
+                      }}
                     >
                       −
                     </button>
@@ -329,10 +400,13 @@ function ItineraryPanel({
 
                         textAlign: "center",
 
-                        fontSize: "12px",
+                        fontSize:
+                          typography.sizes
+                            .caption,
+
                         fontWeight:
-                          typography
-                            .labelWeight,
+                          typography.weights
+                            .semibold,
 
                         color:
                           colours.mutedInk,
@@ -347,6 +421,7 @@ function ItineraryPanel({
                     <button
                       type="button"
                       aria-label={`Increase stay in ${leg.cityName}`}
+                      disabled={leg.days >= 14}
                       onClick={() =>
                         changeDays(
                           leg.cityId,
@@ -354,27 +429,28 @@ function ItineraryPanel({
                           1,
                         )
                       }
-                      style={editButtonStyle}
+                      style={{
+                        ...editButtonStyle,
+
+                        opacity:
+                          leg.days >= 14
+                            ? 0.45
+                            : 1,
+
+                        cursor:
+                          leg.days >= 14
+                            ? "default"
+                            : "pointer",
+                      }}
                     >
                       +
                     </button>
                   </div>
                 ) : (
                   <div
-                    style={{
-                      padding: "5px 9px",
-
-                      borderRadius: "9px",
-                      background: "#F2F4F7",
-
-                      fontSize: "12px",
-                      fontWeight:
-                        typography
-                          .interfaceWeight,
-
-                      color:
-                        colours.mutedInk,
-                    }}
+                    style={
+                      neutralBadgeStyle
+                    }
                   >
                     {leg.days}{" "}
                     {leg.days === 1
@@ -385,19 +461,13 @@ function ItineraryPanel({
 
                 <div
                   style={{
+                    ...componentStyles.pill,
+
                     padding: "5px 9px",
 
-                    borderRadius: "9px",
-
-                    background:
-                      colours.accentSoft,
-
-                    fontSize: "12px",
-                    fontWeight:
-                      typography.labelWeight,
-
-                    color:
-                      colours.accent,
+                    borderRadius:
+                      designSystem.radii
+                        .small,
                   }}
                 >
                   €{leg.estimatedPriceEur}
@@ -416,27 +486,28 @@ function ItineraryPanel({
             justifyContent:
               "space-between",
 
-            gap: "16px",
+            gap: spacing.xl,
 
             marginTop: "20px",
-            paddingTop: "16px",
+            paddingTop: spacing.xl,
 
             borderTop:
-              "1px solid rgba(36, 50, 74, 0.12)",
+              `1px solid ${colours.border}`,
           }}
         >
           <div>
             <div
               style={{
-                marginBottom: "3px",
+                marginBottom:
+                  spacing.tiny,
 
-                fontSize: "12px",
+                fontSize:
+                  typography.sizes.caption,
+
                 fontWeight:
-                  typography
-                    .interfaceWeight,
+                  typography.weights.regular,
 
-                color:
-                  colours.mutedInk,
+                color: colours.mutedInk,
               }}
             >
               Trip length
@@ -444,9 +515,13 @@ function ItineraryPanel({
 
             <div
               style={{
-                fontSize: "17px",
+                fontSize:
+                  typography.sizes
+                    .headingSmall,
+
                 fontWeight:
-                  typography.labelWeight,
+                  typography.weights
+                    .semibold,
               }}
             >
               {totalDays}{" "}
@@ -463,15 +538,16 @@ function ItineraryPanel({
           >
             <div
               style={{
-                marginBottom: "3px",
+                marginBottom:
+                  spacing.tiny,
 
-                fontSize: "12px",
+                fontSize:
+                  typography.sizes.caption,
+
                 fontWeight:
-                  typography
-                    .interfaceWeight,
+                  typography.weights.regular,
 
-                color:
-                  colours.mutedInk,
+                color: colours.mutedInk,
               }}
             >
               Estimated travel
@@ -480,11 +556,11 @@ function ItineraryPanel({
             <div
               style={{
                 fontSize: "19px",
-                fontWeight:
-                  typography.labelWeight,
 
-                color:
-                  colours.accent,
+                fontWeight:
+                  typography.weights.bold,
+
+                color: colours.accent,
               }}
             >
               €{totalPriceEur}
@@ -492,7 +568,7 @@ function ItineraryPanel({
           </div>
         </div>
       )}
-    </div>
+    </Panel>
   );
 }
 
