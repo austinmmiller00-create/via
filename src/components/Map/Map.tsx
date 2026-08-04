@@ -53,6 +53,13 @@ import {
 } from "./mapStyle";
 
 import { getRouteDuration } from "./routeAnimation";
+
+import {
+  clearSavedTrip,
+  loadTripState,
+  saveTripState,
+} from "./tripStorage";
+
 import type { TripState } from "./tripTypes";
 
 type LabelPosition =
@@ -433,9 +440,13 @@ function Map() {
   ] = useState<string[]>([]);
 
   const [tripState, setTripState] =
-    useState<TripState>(
-      initialTripState,
+    useState<TripState>(() =>
+      loadTripState(initialTripState),
     );
+
+  useEffect(() => {
+    saveTripState(tripState);
+  }, [tripState]);
 
   const [
     sliderDistanceKm,
@@ -744,6 +755,8 @@ function Map() {
 
   const startNewTrip =
     useCallback(() => {
+      clearSavedTrip();
+
       setTripState({
         currentCityId:
           startingCityId,
