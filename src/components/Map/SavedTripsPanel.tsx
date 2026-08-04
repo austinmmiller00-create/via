@@ -1,5 +1,12 @@
+import Button from "../ui/Button";
+import Modal from "../ui/Modal";
+
+import {
+  componentStyles,
+  designSystem,
+} from "../../styles/designSystem";
+
 import type { SavedTrip } from "./savedTripsStorage";
-import { mapStyle } from "./mapStyle";
 
 type SavedTripsPanelProps = {
   trips: SavedTrip[];
@@ -33,8 +40,14 @@ function SavedTripsPanel({
   onOpenTrip,
   onDeleteTrip,
 }: SavedTripsPanelProps) {
-  const typography = mapStyle.typography;
-  const colours = mapStyle.colors;
+  const typography =
+    designSystem.typography;
+
+  const colours =
+    designSystem.colours;
+
+  const spacing =
+    designSystem.spacing;
 
   const deleteTrip = (
     trip: SavedTrip,
@@ -50,422 +63,344 @@ function SavedTripsPanel({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Saved trips"
+    <Modal
+      ariaLabel="Saved trips"
+      width="regular"
+      zIndex={
+        designSystem.zIndex.modalAbove
+      }
       style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 2100,
-
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-
-        boxSizing: "border-box",
-        padding: "24px",
-
-        background:
-          "rgba(36, 50, 74, 0.35)",
-
-        backdropFilter: "blur(5px)",
-        WebkitBackdropFilter:
-          "blur(5px)",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       <div
         style={{
-          width: "460px",
-          maxWidth: "100%",
-          maxHeight:
-            "calc(100vh - 48px)",
-
           display: "flex",
-          flexDirection: "column",
+          alignItems: "flex-start",
+          justifyContent:
+            "space-between",
 
-          boxSizing: "border-box",
-          padding: "24px",
-
-          borderRadius: "24px",
-
-          background:
-            "rgba(255, 255, 255, 0.98)",
-
-          boxShadow:
-            "0 24px 70px rgba(36, 50, 74, 0.3)",
-
-          fontFamily: typography.family,
-          color: colours.ink,
+          gap: spacing.xxl,
+          marginBottom: spacing.panel,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent:
-              "space-between",
+        <div>
+          <div
+            style={{
+              marginBottom: spacing.tiny,
 
-            gap: "18px",
-            marginBottom: "20px",
+              fontSize:
+                typography.sizes.small,
+
+              fontWeight:
+                typography.weights.regular,
+
+              color: colours.mutedInk,
+            }}
+          >
+            Your journeys
+          </div>
+
+          <div
+            style={{
+              fontSize:
+                typography.sizes
+                  .headingLarge,
+
+              fontWeight:
+                typography.weights.bold,
+
+              letterSpacing:
+                typography.letterSpacing
+                  .heading,
+
+              lineHeight:
+                typography.lineHeights
+                  .compact,
+            }}
+          >
+            Saved trips
+          </div>
+        </div>
+
+        <button
+          type="button"
+          aria-label="Close saved trips"
+          onClick={onClose}
+          style={{
+            appearance: "none",
+
+            width: "38px",
+            height: "38px",
+            flexShrink: 0,
+
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+
+            padding: 0,
+
+            border:
+              `1px solid ${colours.border}`,
+
+            borderRadius:
+              designSystem.radii.circle,
+
+            background:
+              colours.surfaceMuted,
+
+            fontFamily:
+              typography.family,
+
+            fontSize: "22px",
+
+            fontWeight:
+              typography.weights.regular,
+
+            lineHeight: 1,
+
+            color: colours.ink,
+            cursor: "pointer",
+
+            transition:
+              designSystem.motion.fast,
           }}
         >
-          <div>
+          ×
+        </button>
+      </div>
+
+      <div
+        style={{
+          overflowY: "auto",
+          paddingRight: spacing.tiny,
+        }}
+      >
+        {trips.length === 0 ? (
+          <div
+            style={{
+              ...componentStyles.card,
+
+              padding:
+                `${designSystem.spacing.page} ${designSystem.spacing.section}`,
+
+              textAlign: "center",
+            }}
+          >
             <div
               style={{
-                marginBottom: "4px",
+                marginBottom:
+                  spacing.small,
 
-                fontSize: "13px",
+                fontSize:
+                  typography.sizes
+                    .headingSmall,
+
                 fontWeight:
-                  typography.interfaceWeight,
+                  typography.weights
+                    .semibold,
+              }}
+            >
+              No saved trips yet
+            </div>
+
+            <div
+              style={{
+                fontSize:
+                  typography.sizes.body,
+
+                fontWeight:
+                  typography.weights.regular,
+
+                lineHeight:
+                  typography.lineHeights
+                    .normal,
 
                 color: colours.mutedInk,
               }}
             >
-              Your journeys
-            </div>
-
-            <div
-              style={{
-                fontSize: "28px",
-                fontWeight:
-                  typography.labelWeight,
-
-                letterSpacing: "-1px",
-                lineHeight: 1.1,
-              }}
-            >
-              Saved trips
+              Finish a trip and save it
+              to see it here.
             </div>
           </div>
-
-          <button
-            type="button"
-            aria-label="Close saved trips"
-            onClick={onClose}
+        ) : (
+          <div
             style={{
-              appearance: "none",
-
-              width: "38px",
-              height: "38px",
-              flexShrink: 0,
-
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-
-              padding: 0,
-
-              border:
-                "1px solid rgba(36, 50, 74, 0.12)",
-
-              borderRadius: "50%",
-
-              background: "#F2F4F7",
-
-              fontFamily:
-                typography.family,
-
-              fontSize: "22px",
-              fontWeight:
-                typography.interfaceWeight,
-
-              lineHeight: 1,
-              color: colours.ink,
-
-              cursor: "pointer",
+              flexDirection: "column",
+              gap: spacing.regular,
             }}
           >
-            ×
-          </button>
-        </div>
+            {trips.map((trip) => {
+              const totalDays =
+                trip.stops.reduce(
+                  (total, stop) =>
+                    total + stop.days,
+                  0,
+                );
 
-        <div
-          style={{
-            overflowY: "auto",
-            paddingRight: "3px",
-          }}
-        >
-          {trips.length === 0 ? (
-            <div
-              style={{
-                padding: "34px 20px",
+              const finalCity =
+                trip.stops[
+                  trip.stops.length - 1
+                ]?.cityName;
 
-                borderRadius: "18px",
-                background: "#F7F8FA",
-
-                textAlign: "center",
-              }}
-            >
-              <div
-                style={{
-                  marginBottom: "7px",
-
-                  fontSize: "17px",
-                  fontWeight:
-                    typography.labelWeight,
-                }}
-              >
-                No saved trips yet
-              </div>
-
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight:
-                    typography.interfaceWeight,
-
-                  lineHeight: 1.45,
-                  color: colours.mutedInk,
-                }}
-              >
-                Finish a trip and save it
-                to see it here.
-              </div>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "11px",
-              }}
-            >
-              {trips.map((trip) => {
-                const totalDays =
-                  trip.stops.reduce(
-                    (total, stop) =>
-                      total + stop.days,
-                    0,
-                  );
-
-                const finalCity =
-                  trip.stops[
-                    trip.stops.length - 1
-                  ]?.cityName;
-
-                return (
+              return (
+                <div
+                  key={trip.id}
+                  style={{
+                    ...componentStyles.card,
+                  }}
+                >
                   <div
-                    key={trip.id}
                     style={{
-                      padding: "16px",
+                      display: "flex",
+                      alignItems:
+                        "flex-start",
 
-                      border:
-                        "1px solid rgba(36, 50, 74, 0.1)",
+                      justifyContent:
+                        "space-between",
 
-                      borderRadius: "17px",
-                      background: "#F7F8FA",
+                      gap: spacing.regular,
+                      marginBottom:
+                        spacing.regular,
                     }}
                   >
                     <div
                       style={{
-                        display: "flex",
-                        alignItems:
-                          "flex-start",
-
-                        justifyContent:
-                          "space-between",
-
-                        gap: "12px",
-                        marginBottom: "12px",
+                        minWidth: 0,
                       }}
                     >
                       <div
                         style={{
-                          minWidth: 0,
+                          marginBottom:
+                            spacing.tiny,
+
+                          overflow:
+                            "hidden",
+
+                          fontSize:
+                            typography.sizes
+                              .bodyLarge,
+
+                          fontWeight:
+                            typography.weights
+                              .semibold,
+
+                          lineHeight:
+                            typography.lineHeights
+                              .tight,
+
+                          textOverflow:
+                            "ellipsis",
+
+                          whiteSpace:
+                            "nowrap",
                         }}
                       >
-                        <div
-                          style={{
-                            marginBottom:
-                              "4px",
-
-                            overflow:
-                              "hidden",
-
-                            fontSize:
-                              "16px",
-
-                            fontWeight:
-                              typography.labelWeight,
-
-                            lineHeight: 1.25,
-                            textOverflow:
-                              "ellipsis",
-
-                            whiteSpace:
-                              "nowrap",
-                          }}
-                        >
-                          {trip.name}
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize:
-                              "12px",
-
-                            fontWeight:
-                              typography.interfaceWeight,
-
-                            color:
-                              colours.mutedInk,
-                          }}
-                        >
-                          {formatSavedDate(
-                            trip.createdAt,
-                          )}
-                        </div>
+                        {trip.name}
                       </div>
 
                       <div
                         style={{
-                          flexShrink: 0,
-
-                          padding:
-                            "6px 9px",
-
-                          borderRadius:
-                            "999px",
-
-                          background:
-                            "rgba(231, 111, 81, 0.12)",
-
                           fontSize:
-                            "12px",
+                            typography.sizes
+                              .caption,
 
                           fontWeight:
-                            typography.labelWeight,
-
-                          color:
-                            colours.accent,
-                        }}
-                      >
-                        {trip.stops.length}{" "}
-                        {trip.stops.length ===
-                        1
-                          ? "stop"
-                          : "stops"}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        marginBottom: "14px",
-
-                        fontSize: "13px",
-                        fontWeight:
-                          typography.interfaceWeight,
-
-                        lineHeight: 1.4,
-                        color:
-                          colours.mutedInk,
-                      }}
-                    >
-                      {totalDays}{" "}
-                      {totalDays === 1
-                        ? "day"
-                        : "days"}
-
-                      {finalCity
-                        ? ` · Ends in ${finalCity}`
-                        : ""}
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "9px",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onOpenTrip(trip)
-                        }
-                        style={{
-                          appearance:
-                            "none",
-
-                          flex: 1,
-
-                          padding:
-                            "11px 14px",
-
-                          border: "none",
-                          borderRadius:
-                            "11px",
-
-                          background:
-                            colours.accent,
-
-                          fontFamily:
-                            typography.family,
-
-                          fontSize:
-                            "13px",
-
-                          fontWeight:
-                            typography.labelWeight,
-
-                          color:
-                            colours.white,
-
-                          cursor:
-                            "pointer",
-                        }}
-                      >
-                        Open trip
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteTrip(trip)
-                        }
-                        style={{
-                          appearance:
-                            "none",
-
-                          padding:
-                            "11px 14px",
-
-                          border:
-                            "1px solid rgba(36, 50, 74, 0.12)",
-
-                          borderRadius:
-                            "11px",
-
-                          background:
-                            "#FFFFFF",
-
-                          fontFamily:
-                            typography.family,
-
-                          fontSize:
-                            "13px",
-
-                          fontWeight:
-                            typography.labelWeight,
+                            typography.weights
+                              .regular,
 
                           color:
                             colours.mutedInk,
-
-                          cursor:
-                            "pointer",
                         }}
                       >
-                        Delete
-                      </button>
+                        {formatSavedDate(
+                          trip.createdAt,
+                        )}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        ...componentStyles.pill,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {trip.stops.length}{" "}
+                      {trip.stops.length ===
+                      1
+                        ? "stop"
+                        : "stops"}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+
+                  <div
+                    style={{
+                      marginBottom:
+                        spacing.large,
+
+                      fontSize:
+                        typography.sizes.small,
+
+                      fontWeight:
+                        typography.weights
+                          .regular,
+
+                      lineHeight:
+                        typography.lineHeights
+                          .normal,
+
+                      color:
+                        colours.mutedInk,
+                    }}
+                  >
+                    {totalDays}{" "}
+                    {totalDays === 1
+                      ? "day"
+                      : "days"}
+
+                    {finalCity
+                      ? ` · Ends in ${finalCity}`
+                      : ""}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: spacing.medium,
+                    }}
+                  >
+                    <Button
+                      size="small"
+                      style={{
+                        flex: 1,
+                      }}
+                      onClick={() =>
+                        onOpenTrip(trip)
+                      }
+                    >
+                      Open trip
+                    </Button>
+
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() =>
+                        deleteTrip(trip)
+                      }
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
