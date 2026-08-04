@@ -688,6 +688,37 @@ function Map() {
       [],
     );
 
+  const changeStopDays =
+    useCallback(
+      (
+        cityId: string,
+        days: number,
+      ) => {
+        const safeDays = Math.min(
+          14,
+          Math.max(1, days),
+        );
+
+        setTripState(
+          (currentState) => ({
+            ...currentState,
+
+            stops:
+              currentState.stops.map(
+                (stop) =>
+                  stop.cityId === cityId
+                    ? {
+                        ...stop,
+                        days: safeDays,
+                      }
+                    : stop,
+              ),
+          }),
+        );
+      },
+      [],
+    );
+
   const openEndTripSummary =
     useCallback(() => {
       if (
@@ -1085,6 +1116,9 @@ function Map() {
             startingCityName
           }
           legs={itineraryLegs}
+          onChangeDays={
+            changeStopDays
+          }
         />
 
         {canEndTrip && (
